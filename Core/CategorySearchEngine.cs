@@ -1,5 +1,3 @@
-using Fastenshtein;
-
 namespace FastPayment.Core;
 
 public class CategorySearchEngine {
