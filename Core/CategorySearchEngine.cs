@@ -14,20 +14,45 @@ public class CategorySearchEngine {
   }
 
   public IEnumerable<string> Search(string input) {
-    var lev = new Levenshtein(input);
-
-    var distances = new List<(string Word, int Dist)>();
+    List<string> result = [];
     foreach (var el in _searchSpace) {
-      int dist = lev.DistanceFrom(el);
+      string[] inputSplit = input.Split(":");
 
-      Console.WriteLine($"Distance between '{el}' and '{input}' is {dist}");
+      string inputCategory = inputSplit[0].Trim();;
+      string? inputSubcategory = null;
 
-      distances.Add((el, dist));
+      if (inputSplit.Count() == 2)
+      {
+        inputSubcategory = inputSplit[1].Trim();
+      }
+      
+      string[] categorySplit = el.Split(":");
+      string candidateCategory = categorySplit[0].Trim();
+      string? candidateSubcategory = null;
+
+      if (inputSplit.Count() == 2)
+      {
+        candidateSubcategory = categorySplit[1].Trim();        
+      }
+
+      // We can't compare subcategories against each other 
+      // if one is null.
+      if (inputSubcategory is null || candidateSubcategory is null)
+      {
+        if (candidateCategory.StartsWith(inputCategory))
+        {
+          result.Add(el);
+        }
+      }
+      else
+      {
+        if (candidateCategory.StartsWith(inputCategory) 
+          && candidateSubcategory.StartsWith(inputSubcategory))
+        {
+          result.Add(el);
+        }
+      }
     }
-
-    IEnumerable<string> result = distances
-      .OrderBy(x => x.Dist)
-      .Select(x => x.Word);
 
     return result;
   }

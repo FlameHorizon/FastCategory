@@ -65,25 +65,28 @@ public class UnitTest1 {
 
     IEnumerable<string> actual = se.Search("Dat");
 
-    Assert.Equal(new List<string> { "Datek", "Działka", "Dziecko" }, actual);
+    Assert.Equal(new List<string> { "Datek" }, actual);
   }
 
-  [Fact]
-  public void Search_SupportCategory_AndSubcategory() {
+  [Theory]
+  [InlineData("Inne wydatki: B")]
+  [InlineData("I:B")]
+  [InlineData("Inne:B")]
+  public void Search_SupportCategory_AndSubcategory(string phrase) {
     List<string> searchSpace = new() {
       "Inne wydatki: Art. papiernicze",
       "Inne wydatki: Baterie",
-      "Inne wydatki: Bizuteria"
+      "Inne wydatki: Bizuteria",
+      "Baterie: Inne"
     };
 
     var se = new CategorySearchEngine(searchSpace);
 
-    IEnumerable<string> actual = se.Search("Inne wydatki: B");
+    IEnumerable<string> actual = se.Search(phrase);
 
     List<string> expected = new() {
       "Inne wydatki: Baterie",
-      "Inne wydatki: Bizuteria",
-      "Inne wydatki: Art. papiernicze"
+      "Inne wydatki: Bizuteria"
     };
 
     Assert.Equal(expected, actual);
