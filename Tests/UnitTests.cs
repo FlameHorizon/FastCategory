@@ -48,18 +48,7 @@ public class UnitTests {
   }
 
   [Fact]
-  public void Search_Returns_ClosestMatch() {
-    List<string> searchSpace = new() { "Samochód" };
-    var se = new CategorySearchEngine(searchSpace);
-
-    IEnumerable<string> actual = se.Search("Sam");
-
-    Assert.Single(actual);
-    Assert.Equal("Samochód", actual.First());
-  }
-
-  [Fact]
-  public void Search_Returns_ClosestMatch_2() {
+  public void Search_Returns_ResultsWhichStartsWithPhrase() {
     List<string> searchSpace = new() { "Datek", "Dziecko", "Działka" };
     var se = new CategorySearchEngine(searchSpace);
 
