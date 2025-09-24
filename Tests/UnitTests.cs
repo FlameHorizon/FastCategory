@@ -2,7 +2,7 @@
 
 namespace Tests;
 
-public class UnitTest1 {
+public class UnitTests {
   [Fact]
   public void Check_If_Ctor_Works() {
     var p = new Payment(
