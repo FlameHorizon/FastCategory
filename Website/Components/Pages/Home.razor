@@ -1,0 +1,46 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+@using FastPayment.Core
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+<MudAutocomplete
+  @bind-Value="_value"
+  SearchFunc="Search"
+  />
+
+<MudThemeProvider />
+<MudPopoverProvider />
+
+@code {
+  // Stores currently selected value in autocomplete component.
+  private string _value;
+
+  private string[] _searchSpace = [ 
+    "Jedzenie:Dom", 
+    "Jedzenie:Miasto",
+    "Jedzenie:Fast Food"
+  ];
+
+  private async Task<IEnumerable<string>> Search(
+    string phrase, 
+    CancellationToken token)
+  {
+    // In real life use an asynchronous function for fetching data from an api.
+    await Task.Delay(5, token);
+
+    if (string.IsNullOrEmpty(phrase))
+    {
+      return _searchSpace;
+    }
+
+    var engine = new CategorySearchEngine(_searchSpace);
+
+    // ##TODO: Make sure search is case-insensitive.
+    IEnumerable<string> result = engine.Search(phrase);
+    return result;
+  }
+}
