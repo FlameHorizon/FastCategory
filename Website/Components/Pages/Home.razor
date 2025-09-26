@@ -7,17 +7,55 @@
 
 <h1>Hello, world!</h1>
 
+<MudDatePicker 
+  Label="Date" 
+  @bind-Value="_date"/>
+
+<MudSelect 
+  @bind-Value="_type" 
+  Label="Transaction type"
+  DateFormat="dd.MM.yyyy">
+  @foreach (var opt in _options)
+  {
+    <MudSelectItem Value="opt">@opt</MudSelectItem>
+  }
+</MudSelect>
+
+<MudSelect
+  @bind-Value="_reciever"
+  Label="Reciever">
+  @foreach(var rec in _recievers)
+  {
+    <MudSelectItem Value="rec">@rec</MudSelectItem>
+  }
+</MudSelect>
+
 <MudAutocomplete
   @bind-Value="_value"
-  SearchFunc="Search"
-  />
+  Label="Category"
+  SearchFunc="Search"/>
 
 <MudThemeProvider />
 <MudPopoverProvider />
 
 @code {
   // Stores currently selected value in autocomplete component.
-  private string _value;
+  private string? _value;
+
+  // Date when transaction occured.
+  private DateTime _date;
+
+  // Type of the transaction.
+  private string? _type;
+
+  // Recipient of the transaction (debit site).
+  private string? _reciever;
+
+  private IEnumerable<string> _options = [
+    "Deposit", 
+    "Withdrawl", 
+    "Transfer"
+  ];
 
   private string[] _searchSpace = [ 
     "Jedzenie:Dom", 
@@ -25,12 +63,17 @@
     "Jedzenie:Fast Food"
   ];
 
-  private async Task<IEnumerable<string>> Search(
+  private string[] _recievers = [
+    "Rec1",
+    "Rec2"
+  ];
+
+  private async Task<IEnumerable<string?>> Search(
     string phrase, 
     CancellationToken token)
   {
     // In real life use an asynchronous function for fetching data from an api.
-    await Task.Delay(5, token);
+    await Task.Delay( 5, token);
 
     if (string.IsNullOrEmpty(phrase))
     {
@@ -40,7 +83,7 @@
     var engine = new CategorySearchEngine(_searchSpace);
 
     // ##TODO: Make sure search is case-insensitive.
-    IEnumerable<string> result = engine.Search(phrase);
+    IEnumerable<string?> result = engine.Search(phrase);
     return result;
   }
 }
