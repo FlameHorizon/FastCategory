@@ -2,38 +2,56 @@
 @rendermode InteractiveServer
 
 @using FastPayment.Core
+@using MudBlazor.Extensions
 
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
 
-<MudDatePicker 
-  Label="Date" 
-  @bind-Value="_date"/>
+<MudForm>
+  <MudDatePicker 
+    Label="Date" 
+    @bind-Date="_date" 
+    @onkeydown="OnKeyDownDate"/>
 
-<MudSelect 
-  @bind-Value="_type" 
-  Label="Transaction type"
-  DateFormat="dd.MM.yyyy">
-  @foreach (var opt in _options)
-  {
-    <MudSelectItem Value="opt">@opt</MudSelectItem>
-  }
-</MudSelect>
+  <MudSelect 
+    @bind-Value="_type" 
+    Label="Transaction type"
+    DateFormat="dd.MM.yyyy">
+    @foreach (var opt in _options)
+    {
+      <MudSelectItem Value="opt">@opt</MudSelectItem>
+    }
+  </MudSelect>
 
-<MudSelect
-  @bind-Value="_reciever"
-  Label="Reciever">
-  @foreach(var rec in _recievers)
-  {
-    <MudSelectItem Value="rec">@rec</MudSelectItem>
-  }
-</MudSelect>
+  <MudSelect
+    @bind-Value="_reciever"
+    Label="Reciever">
+    @foreach(var rec in _recievers)
+    {
+      <MudSelectItem Value="rec">@rec</MudSelectItem>
+    }
+  </MudSelect>
 
-<MudAutocomplete
-  @bind-Value="_value"
-  Label="Category"
-  SearchFunc="Search"/>
+  <MudAutocomplete
+    @bind-Value="_value"
+    Label="Category"
+    SearchFunc="Search"/>
+
+  @* ##TODO: Remove up/down arrows at the end of the input *@
+  <MudTextField
+    @bind-Value="_paymentValue"
+    Label="Payment Value" />
+</MudForm>
+
+<MudButton 
+  ButtonType="ButtonType.Submit"
+  Variant="Variant.Filled"
+  Color="Color.Primary"
+  Class="ml-auto"
+  OnClick="@(() => OnValidSubmit())">
+  Register
+</MudButton>
 
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -43,13 +61,15 @@
   private string? _value;
 
   // Date when transaction occured.
-  private DateTime _date;
+  private DateTime? _date;
 
   // Type of the transaction.
   private string? _type;
 
   // Recipient of the transaction (debit site).
   private string? _reciever;
+
+  private decimal _paymentValue;
 
   private IEnumerable<string> _options = [
     "Deposit", 
@@ -85,5 +105,23 @@
     // ##TODO: Make sure search is case-insensitive.
     IEnumerable<string?> result = engine.Search(phrase);
     return result;
+  }
+
+  private void OnKeyDownDate(KeyboardEventArgs args)
+  {
+    if (args.Key == "=")
+    {
+      _date = _date.Value.AddDays(1);
+    }
+  }
+
+  private void OnValidSubmit()
+  {
+    Console.WriteLine("Form is valid");
+    Console.WriteLine($"Date: {_date}");
+    Console.WriteLine($"Type: {_type}");
+    Console.WriteLine($"Reciever: {_reciever}");
+    Console.WriteLine($"Category: {_value}");
+    Console.WriteLine($"Payment value: {_paymentValue}");
   }
 }
