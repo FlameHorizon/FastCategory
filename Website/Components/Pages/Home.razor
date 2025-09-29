@@ -2,20 +2,26 @@
 @rendermode InteractiveServer
 
 @using FastPayment.Core
+@using Website.Models
 @using MudBlazor.Extensions
+@using System.ComponentModel.DataAnnotations
+
 
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
 
-<MudForm>
+<EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
+  <DataAnnotationsValidator/>
+
   <MudDatePicker 
     Label="Date" 
-    @bind-Date="_date" 
+    @bind-Date="_model.Date" 
+    For="@(() => _model.Date)"
     @onkeydown="OnKeyDownDate"/>
 
   <MudSelect 
-    @bind-Value="_type" 
+    @bind-Value="_model.TransactionType" 
     Label="Transaction type"
     DateFormat="dd.MM.yyyy">
     @foreach (var opt in _options)
@@ -25,7 +31,7 @@
   </MudSelect>
 
   <MudSelect
-    @bind-Value="_reciever"
+    @bind-Value="_model.Payee"
     Label="Reciever">
     @foreach(var rec in _recievers)
     {
@@ -34,42 +40,30 @@
   </MudSelect>
 
   <MudAutocomplete
-    @bind-Value="_value"
+    @bind-Value="_model.Categories"
     Label="Category"
     SearchFunc="Search"/>
 
   @* ##TODO: Remove up/down arrows at the end of the input *@
   <MudTextField
-    @bind-Value="_paymentValue"
+    @bind-Value="_model.TotalAmount"
     Label="Payment Value" />
-</MudForm>
 
-<MudButton 
-  ButtonType="ButtonType.Submit"
-  Variant="Variant.Filled"
-  Color="Color.Primary"
-  Class="ml-auto"
-  OnClick="@(() => OnValidSubmit())">
-  Register
-</MudButton>
+  <MudButton 
+    ButtonType="ButtonType.Submit"
+    Variant="Variant.Filled"
+    Color="Color.Primary"
+    Class="ml-auto">
+    Register
+  </MudButton>
+</EditForm>
 
 <MudThemeProvider />
 <MudPopoverProvider />
 
 @code {
-  // Stores currently selected value in autocomplete component.
-  private string? _value;
-
-  // Date when transaction occured.
-  private DateTime? _date;
-
-  // Type of the transaction.
-  private string? _type;
-
-  // Recipient of the transaction (debit site).
-  private string? _reciever;
-
-  private decimal _paymentValue;
+  // Model for the form.
+  private readonly TransactionForm _model = new();
 
   private IEnumerable<string> _options = [
     "Deposit", 
@@ -97,7 +91,7 @@
 
     if (string.IsNullOrEmpty(phrase))
     {
-      return _searchSpace;
+        return _searchSpace;
     }
 
     var engine = new CategorySearchEngine(_searchSpace);
@@ -107,21 +101,35 @@
     return result;
   }
 
+  /// <summary>
+  /// Handle key presses when the date input is focused.
+  /// </summary>
+  /// <param name="args">Information about which key was pressed.</param>
   private void OnKeyDownDate(KeyboardEventArgs args)
   {
+    if (_model.Date == null)
+    {
+      _model.Date = DateTime.Today;
+      return;
+    }
+
     if (args.Key == "=")
     {
-      _date = _date.Value.AddDays(1);
+      _model.Date = _model.Date.Value.AddDays(1);
+    }
+    else if (args.Key == "-")
+    {
+      _model.Date = _model.Date.Value.AddDays(-1);
     }
   }
 
   private void OnValidSubmit()
   {
     Console.WriteLine("Form is valid");
-    Console.WriteLine($"Date: {_date}");
-    Console.WriteLine($"Type: {_type}");
-    Console.WriteLine($"Reciever: {_reciever}");
-    Console.WriteLine($"Category: {_value}");
-    Console.WriteLine($"Payment value: {_paymentValue}");
+    Console.WriteLine($"Date: {_model.Date}");
+    Console.WriteLine($"Type: {_model.TransactionType}");
+    Console.WriteLine($"Reciever: {_model.Payee}");
+    Console.WriteLine($"Category: {_model.Categories}");
+    Console.WriteLine($"Payment value: {_model.TotalAmount}");
   }
 }
