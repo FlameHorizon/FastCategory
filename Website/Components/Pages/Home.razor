@@ -4,109 +4,159 @@
 @using FastPayment.Core
 @using System.Runtime.CompilerServices
 @using System.Runtime.InteropServices
+@using System.Threading.Tasks
 @using Website.Models
 @using MudBlazor.Extensions
 @using System.ComponentModel.DataAnnotations
+
+@* 
+  ##BUG: There is a bug in the application which prevents adding new split categories
+  or saving them using keyboard shortcuts when more than one tab open in the browser
+  with the application.
+
+  Copilot suggests that the issue might be related to the static _instance field.
+  I have tried to remove the static keyword, but then the JSInvokable method can't
+  access the instance.
+
+  Personally, I don't know what might be the issue here. Have not seen this before.
+
+  To reproduce the issue:
+  1. Start the application.
+  2. First tab will open automatically.
+  3. Press bunch of times Alt + A to add new split categories.
+  4. Open new tab with the application.
+  5. In the new tab, try to add new split categories using Alt + A. It will work as well.
+  6. Go back to the first tab and try to add new split categories using Alt + A.
+     It will not work anymore.
+*@
 
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Home</PageTitle>
 
-<MudItem xs="12" sm="6" md="6">
-  <MudPaper Class="pa-4">
-    <EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
-      <DataAnnotationsValidator/>
+<div class="d-flex gap-4">
+  <MudItem xs="12" sm="6" md="6">
+    <MudPaper Class="pa-4">
+      <EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator/>
 
-      <MudDatePicker 
-        Label="Date" 
-        @bind-Date="_model.Date" 
-        For="@(() => _model.Date)"
-        @onkeydown="OnKeyDownDate"
-        DateFormat="yyyy-MM-dd"
-        ShowToolbar="false"
-        autofocus/>
+        <MudDatePicker 
+          Label="Date" 
+          @bind-Date="_model.Date" 
+          For="@(() => _model.Date)"
+          @onkeydown="OnKeyDownDate"
+          DateFormat="yyyy-MM-dd"
+          ShowToolbar="false"
+          autofocus/>
 
-      <MudSelect 
-        @bind-Value="_model.TransactionType" 
-        Label="Transaction type" >
-        @foreach (var opt in _options)
-        {
-          <MudSelectItem Value="opt">@opt</MudSelectItem>
-        }
-      </MudSelect>
+        <MudSelect 
+          @bind-Value="_model.TransactionType" 
+          Label="Transaction type" >
+          @foreach (var opt in _options)
+          {
+            <MudSelectItem Value="opt">@opt</MudSelectItem>
+          }
+        </MudSelect>
 
-      <MudAutocomplete
-        @bind-Value="_model.Payee"
-        Label="Reciever"
-        SearchFunc="SearchRecievers">
-      </MudAutocomplete>
+        <MudAutocomplete
+          @bind-Value="_model.Payee"
+          Label="Reciever"
+          SearchFunc="SearchRecievers">
+        </MudAutocomplete>
 
-      <MudTextField
-        T="decimal"
-        ValueChanged="@(v => UpdateTotalAmount(v))"
-        Label="Amount" />
+        <MudTextField
+          T="decimal"
+          ValueChanged="@(v => UpdateTotalAmount(v))"
+          Label="Amount" />
 
-      @* 
-        @@FIXME: When enter is pressed to select category, entire form is submitted.
-        Find a way to prevent this and allow user to submit the form only when
-        the "Save" button is pressed or when enter is pressed while focusing "Save" button.
-      *@
-      <div>
-        @foreach (var category in _model.Categories)
-        {
-          <div class="d-flex">
-            <MudAutocomplete
-              @bind-Value="category.Name"
-              Label="Category"
-              SearchFunc="SearchCategory"
-              @ref="category.Ref"/>
+        <div>
+          @foreach (var category in _model.Categories)
+          {
+            <div class="d-flex">
+              <MudAutocomplete
+                @bind-Value="category.Name"
+                Label="Category"
+                SearchFunc="SearchCategory"
+                @ref="category.Ref" />
 
-            <MudTextField
-              @bind-Value="category.Amount"
-              Immediate="true"
-              Label="Split amount" />
+              <MudTextField
+                @bind-Value="category.Amount"
+                Immediate="true"
+                Label="Split amount" />
 
-            <MudIconButton 
-              Icon="@Icons.Material.Filled.Delete" 
-              Color="Color.Primary" 
-              OnClick="@(() => RemoveCategory(category))" />
-          </div>
-        }
+              <MudIconButton 
+                Icon="@Icons.Material.Filled.Delete" 
+                Color="Color.Primary" 
+                OnClick="@(() => RemoveCategory(category))" />
+            </div>
+          }
 
-        <MudButton 
-          Variant="Variant.Outlined" 
-          Color="Color.Primary" 
-          OnClick="@(() => AddCategoryAsync())">
-            <MudIcon Icon="@Icons.Material.Filled.Add" />
-            Split
-        </MudButton>
+          <MudButton 
+            class="mt-2"
+            Variant="Variant.Outlined" 
+            Color="Color.Primary" 
+            OnClick="AddCategory">
+              <MudIcon Icon="@Icons.Material.Filled.Add" />
+              Split
+          </MudButton>
 
+        </div>
+
+        <div class="d-flex flex-row-reverse">
+          <MudButton 
+            ButtonType="ButtonType.Submit"
+            Variant="Variant.Filled"
+            Color="Color.Primary"
+            Class="ml-auto">
+            Save
+          </MudButton>
+        </div>
+      </EditForm>
+
+      <div class="d-flex flex-row-reverse mt-2">
+          <MudButton 
+            Variant="Variant.Outlined" 
+            Color="Color.Primary" 
+            OnClick="@(() => ExportToDisc())">
+              <MudIcon Icon="@Icons.Material.Filled.Download" />
+              Export
+          </MudButton>
       </div>
 
-      <div class="d-flex flex-row-reverse">
-        <MudButton 
-          ButtonType="ButtonType.Submit"
-          Variant="Variant.Filled"
-          Color="Color.Primary"
-          Class="ml-auto">
-          Save
-        </MudButton>
-      </div>
+    </MudPaper>
+  </MudItem>
 
-    </EditForm>
+  <MudItem xs="12" sm="6" md="6">
+    <MudPaper Class="pa-4">
+      <h3>Payments</h3>
+      <p>List of payments will be shown here.</p>
 
-  </MudPaper>
-</MudItem>
+      @foreach(var p in _payments)
+      {
+        <div class="mb-2 pa-2" style="border: 1px solid lightgray; border-radius: 8px;">
+          <div><b>Date:</b> @p.Date.ToString("yyyy-MM-dd")</div>
+          <div><b>Type:</b> @p.TransactionType</div>
+          <div><b>Payee:</b> @p.Payee</div>
+          <div><b>Total Amount:</b> @p.TotalAmount.ToString("C")</div>
+        </div>
+      }
+    </MudPaper>
+  </MudItem>
+</div>
 
 <MudThemeProvider />
 <MudPopoverProvider />
 
 @code {
   // Model for the form.
-  private readonly TransactionForm _model = new()
+  private TransactionForm _model = new()
   {
     Categories = [new() { Name = "", Amount = 0 }]
   };
+
+  // In-memory storage for payments.
+  // These payments might be used to export to a file later.
+  private readonly List<Payment> _payments = new();
 
   private static Home? _instance;
 
@@ -145,8 +195,8 @@
   }
 
   private async Task<IEnumerable<string>> SearchCategory(
-  string phrase,
-  CancellationToken token)
+    string phrase,
+    CancellationToken token)
   {
     if (string.IsNullOrEmpty(phrase))
     {
@@ -189,12 +239,59 @@
 
   private void OnValidSubmit()
   {
+    // @@NOTE: Right now, I'm assuming the form is always valid.
+    // In a real application, you would check the validation state.
+    var transactionType = _model.TransactionType switch
+    {
+      "Deposit" => TransactionTypes.Deposit,
+      "Withdrawl" => TransactionTypes.Widthdrawl,
+      "Transfer" => TransactionTypes.Transfer,
+      _ => TransactionTypes.Unknown
+    };
+
+    var categories = new List<Category>();
+    foreach (var cat in _model.Categories)
+    {
+      string[] split = cat.Name.Split(":");
+      string name = split.First();
+      string subcategory = split.Last();
+      decimal amount = cat.Amount;
+
+      categories.Add(new Category(name, subcategory, amount));
+    }
+
+    // @@TODO: Implement following things.
+    // 1. Validate that sum of category amounts equals total amount.
+    // 2. Validate that at least one category is provided.
+    // 3. Validate that date is not null.
+    // 4. Validate that transaction type is valid.
+    // 5. Validate that payee is not empty.
+    // 6. Show validation errors to the user.
+    // 7. Clear the form after successful submission.
+    // 8. Allow users to add notes to the transaction.
+    // 9. Since all transactions will be stored in memory, implement second section where they will be displayed.
+
+    // Convert TransactionModel to Payment entity and save to database.
+    var result = new Payment
+    (
+      date: _model.Date!.Value,
+      transactionType: transactionType,
+      totalAmount: _model.TotalAmount,
+      payee: _model.Payee,
+      categories: categories,
+      notes: ""
+    );
+
+    _payments.Add(result);
+
     Console.WriteLine("Form is valid");
-    Console.WriteLine($"Date: {_model.Date}");
-    Console.WriteLine($"Type: {_model.TransactionType}");
-    Console.WriteLine($"Reciever: {_model.Payee}");
-    Console.WriteLine($"Category: {_model.Categories}");
-    Console.WriteLine($"Payment value: {_model.TotalAmount}");
+
+    _model = new TransactionForm
+    {
+      Categories = [new() { Name = "", Amount = 0 }]
+    };
+
+    StateHasChanged();
   }
 
   /// <summary>
@@ -202,36 +299,39 @@
   /// </summary>
   /// <param name="e">Information about which key was pressed.</param>
   [JSInvokable]
-  public static Task JsKeyDown(KeyboardEventArgs e)
+  public static void JsKeyDown(KeyboardEventArgs e)
   {
     if (e.AltKey && e.Key.ToLower() == "a")
     {
       if (_instance != null)
-        return _instance.InvokeAsync(() => _instance.AddCategoryAsync());
+      {
+        _instance.AddCategory();
       }
-    
-    if (e.AltKey && e.Key.ToLower() == "s")
-    {
-        if (_instance != null)
-            return _instance.InvokeAsync(() => _instance.OnValidSubmit());
     }
 
-    return Task.CompletedTask;
+    if (e.AltKey && e.Key.ToLower() == "s")
+    {
+      if (_instance != null)
+      {
+        _instance.OnValidSubmit();
+      }
+    }
   }
 
-  private async Task AddCategoryAsync()
+  private void AddCategory()
   {
     // Drop focus from any input to avoid issues with MudBlazor components.
-    foreach(var cat in _model.Categories)
+    foreach (var cat in _model.Categories)
     {
       if (cat.Ref is not null)
       {
-        await cat.Ref.CloseMenuAsync();
+        cat.Ref.CloseMenuAsync();
       }
     }
 
     var newCategory = new CategoryAmount();
     _model.Categories.Add(newCategory);
+    StateHasChanged();
 
     if (_model.Categories.Count >= 2)
     {
@@ -245,18 +345,11 @@
       newCategory.Amount = diff;
     }
 
-    await InvokeAsync(StateHasChanged);
-
     // First, render element to the DOM so that Ref is not null.
     // Then, focus the newly added category input.
-    if (newCategory.Ref is null)
+    if (newCategory.Ref is not null)
     {
-      Console.WriteLine("Ref is null, element can't be focused.");
-      await Task.CompletedTask;
-    }
-    else
-    {
-      await newCategory.Ref.FocusAsync();
+      newCategory.Ref.FocusAsync();
     }
   }
 
@@ -270,8 +363,8 @@
   }
 
   private async Task<IEnumerable<string>> SearchRecievers(
-  string phrase,
-  CancellationToken token)
+    string phrase,
+    CancellationToken token)
   {
     if (string.IsNullOrEmpty(phrase))
     {
@@ -294,7 +387,12 @@
 
     if (_model.Categories.Count == 1)
     {
-      _model.Categories[0].Amount = value;
+      _model.Categories.ElementAt(0).Amount = value;
     }
+  }
+
+  private void ExportToDisc()
+  {
+    Console.WriteLine("Exporting to disc...");
   }
 }
