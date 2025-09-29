@@ -219,6 +219,15 @@
 
   private async Task AddCategoryAsync()
   {
+    // Drop focus from any input to avoid issues with MudBlazor components.
+    foreach(var cat in _model.Categories)
+    {
+      if (cat.Ref is not null)
+      {
+        await cat.Ref.CloseMenuAsync();
+      }
+    }
+
     var newCategory = new CategoryAmount();
     _model.Categories.Add(newCategory);
 
