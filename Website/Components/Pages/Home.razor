@@ -10,8 +10,6 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
-
 <MudItem xs="12" sm="6" md="6">
   <MudPaper Class="pa-4">
     <EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
@@ -72,19 +70,25 @@
           </div>
         }
 
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(() => AddCategoryAsync())">
-          <MudIcon Icon="@Icons.Material.Filled.Add" /> Add
+        <MudButton 
+          Variant="Variant.Outlined" 
+          Color="Color.Primary" 
+          OnClick="@(() => AddCategoryAsync())">
+            <MudIcon Icon="@Icons.Material.Filled.Add" />
+            Split
         </MudButton>
 
       </div>
 
-      <MudButton 
-        ButtonType="ButtonType.Submit"
-        Variant="Variant.Filled"
-        Color="Color.Primary"
-        Class="ml-auto">
-        Save
-      </MudButton>
+      <div class="d-flex flex-row-reverse">
+        <MudButton 
+          ButtonType="ButtonType.Submit"
+          Variant="Variant.Filled"
+          Color="Color.Primary"
+          Class="ml-auto">
+          Save
+        </MudButton>
+      </div>
 
     </EditForm>
 
