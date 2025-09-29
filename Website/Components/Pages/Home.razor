@@ -6,60 +6,80 @@
 @using MudBlazor.Extensions
 @using System.ComponentModel.DataAnnotations
 
+@inject IJSRuntime JSRuntime
+
+@* ##TODO: Add ability to insert multiple categories into one trasaction *@
 
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
 
-<EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
-  <DataAnnotationsValidator/>
+<MudItem xs="12" sm="6" md="6">
+  <MudPaper Class="pa-4">
+    <EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
+      <DataAnnotationsValidator/>
 
-  <MudDatePicker 
-    Label="Date" 
-    @bind-Date="_model.Date" 
-    For="@(() => _model.Date)"
-    @onkeydown="OnKeyDownDate"
-    DateFormat="yyyy-MM-dd"
-    ShowToolbar="false"
-    autofocus/>
+      <MudDatePicker 
+        Label="Date" 
+        @bind-Date="_model.Date" 
+        For="@(() => _model.Date)"
+        @onkeydown="OnKeyDownDate"
+        DateFormat="yyyy-MM-dd"
+        ShowToolbar="false"
+        autofocus/>
 
-  <MudSelect 
-    @bind-Value="_model.TransactionType" 
-    Label="Transaction type"
-    DateFormat="dd.MM.yyyy">
-    @foreach (var opt in _options)
-    {
-      <MudSelectItem Value="opt">@opt</MudSelectItem>
-    }
-  </MudSelect>
+      <MudSelect 
+        @bind-Value="_model.TransactionType" 
+        Label="Transaction type"
+        DateFormat="dd.MM.yyyy">
+        @foreach (var opt in _options)
+        {
+          <MudSelectItem Value="opt">@opt</MudSelectItem>
+        }
+      </MudSelect>
 
-  <MudSelect
-    @bind-Value="_model.Payee"
-    Label="Reciever">
-    @foreach(var rec in _recievers)
-    {
-      <MudSelectItem Value="rec">@rec</MudSelectItem>
-    }
-  </MudSelect>
+      @* @@FIXME: Allow to type any text into select input. *@
+      <MudSelect
+        @bind-Value="_model.Payee"
+        Label="Reciever">
+        @foreach(var rec in _recievers)
+        {
+          <MudSelectItem Value="rec">@rec</MudSelectItem>
+        }
+      </MudSelect>
 
-  <MudAutocomplete
-    @bind-Value="_model.Categories"
-    Label="Category"
-    SearchFunc="Search"/>
+      @* ##TODO: Remove up/down arrows at the end of the input *@
+      <MudTextField
+        @bind-Value="_model.TotalAmount"
+        Label="Payment Value" />
 
-  @* ##TODO: Remove up/down arrows at the end of the input *@
-  <MudTextField
-    @bind-Value="_model.TotalAmount"
-    Label="Payment Value" />
+      @* 
+        @@FIXME: When enter is pressed to select category, entire form is submitted.
+        Find a way to prevent this and allow user to submit the form only when
+        the "Save" button is pressed or when enter is pressed while focusing "Save" button.
+      *@
+      <div class="d-flex">
+        <MudAutocomplete
+          @bind-Value="_model.Categories"
+          Label="Category"
+          SearchFunc="Search"/>
 
-  <MudButton 
-    ButtonType="ButtonType.Submit"
-    Variant="Variant.Filled"
-    Color="Color.Primary"
-    Class="ml-auto">
-    Save
-  </MudButton>
-</EditForm>
+        @* ##TODO: Remove up/down arrows at the end of the input *@
+        <MudTextField
+          @bind-Value="_model.TotalAmount"
+          Label="Payment Value" />
+      </div>
+
+      <MudButton 
+        ButtonType="ButtonType.Submit"
+        Variant="Variant.Filled"
+        Color="Color.Primary"
+        Class="ml-auto">
+        Save
+      </MudButton>
+    </EditForm>
+  </MudPaper>
+</MudItem>
 
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -84,6 +104,11 @@
     "Rec1",
     "Rec2"
   ];
+
+  protected async override Task OnAfterRenderAsync(bool firstRender)
+  {
+      await JSRuntime.InvokeVoidAsync("JsFunctions.addKeyboardListenerEvent");
+  }
 
   private async Task<IEnumerable<string?>> Search(
     string phrase, 
@@ -139,5 +164,21 @@
     Console.WriteLine($"Reciever: {_model.Payee}");
     Console.WriteLine($"Category: {_model.Categories}");
     Console.WriteLine($"Payment value: {_model.TotalAmount}");
+  }
+
+  /// <summary>
+  /// Handle key presses from JavaScript.
+  /// </summary>
+  /// <param name="e">Information about which key was pressed.</param>
+  [JSInvokable]
+  public static Task JsKeyDown(KeyboardEventArgs e)
+  {
+    @* @@TODO: When key combo has been pressed (yet to be defined), add next pair of category - value to form. *@
+    if (e.CtrlKey && e.Key == "a")
+    {
+      Console.WriteLine("You pressed CTRL + A");
+    }
+
+    return Task.CompletedTask;
   }
 }
