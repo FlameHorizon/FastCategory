@@ -36,15 +36,11 @@
         }
       </MudSelect>
 
-      @* @@FIXME: Allow to type any text into select input. *@
-      <MudSelect
+      <MudAutocomplete
         @bind-Value="_model.Payee"
-        Label="Reciever">
-        @foreach(var rec in _recievers)
-        {
-          <MudSelectItem Value="rec">@rec</MudSelectItem>
-        }
-      </MudSelect>
+        Label="Reciever"
+        SearchFunc="SearchRecievers">
+      </MudAutocomplete>
 
       @* ##TODO: Remove up/down arrows at the end of the input *@
       <MudTextField
@@ -63,7 +59,7 @@
             <MudAutocomplete
               @bind-Value="category.Name"
               Label="Category"
-              SearchFunc="Search"/>
+              SearchFunc="SearchCategory"/>
 
             <MudTextField
               @bind-Value="category.Amount"
@@ -89,7 +85,9 @@
         Class="ml-auto">
         Save
       </MudButton>
+
     </EditForm>
+
   </MudPaper>
 </MudItem>
 
@@ -117,8 +115,12 @@
   ];
 
   private string[] _recievers = [
-    "Rec1",
-    "Rec2"
+    "Biedronka",
+    "Lidl",
+    "Żabka",
+    "Allegro",
+    "Amazon",
+    "MediaMarkt",
   ];
   
   public Home()
@@ -134,13 +136,10 @@
     }
   }
 
-  private async Task<IEnumerable<string?>> Search(
+  private async Task<IEnumerable<string>> SearchCategory(
     string phrase, 
     CancellationToken token)
   {
-    // In real life use an asynchronous function for fetching data from an api.
-    await Task.Delay( 5, token);
-
     if (string.IsNullOrEmpty(phrase))
     {
         return _searchSpace;
@@ -149,7 +148,7 @@
     var engine = new CategorySearchEngine(_searchSpace);
 
     // ##TODO: Make sure search is case-insensitive.
-    IEnumerable<string?> result = engine.Search(phrase);
+    IEnumerable<string> result = engine.Search(phrase);
     return result;
   }
 
@@ -223,5 +222,20 @@
       _model.Categories.Remove(category);
       StateHasChanged();
     }
+  }
+
+  private async Task<IEnumerable<string>> SearchRecievers(
+    string phrase, 
+    CancellationToken token)
+  {
+    if (string.IsNullOrEmpty(phrase))
+    {
+        return _recievers;
+    }
+
+    IEnumerable<string> result = _recievers
+      .Where(x => x.StartsWith(phrase, StringComparison.OrdinalIgnoreCase));
+
+    return result;
   }
 }
