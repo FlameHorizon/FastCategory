@@ -5,6 +5,7 @@
 @using System.Runtime.CompilerServices
 @using System.Runtime.InteropServices
 @using System.Threading.Tasks
+@using System.Globalization
 @using Website.Models
 @using MudBlazor.Extensions
 @using System.ComponentModel.DataAnnotations
@@ -64,8 +65,10 @@
           SearchFunc="SearchRecievers">
         </MudAutocomplete>
 
-        <MudTextField
+        <MudNumericField
           T="decimal"
+          Format="C"
+          Culture="_culture"
           ValueChanged="@(v => UpdateTotalAmount(v))"
           Label="Amount" />
 
@@ -79,8 +82,10 @@
                 SearchFunc="SearchCategory"
                 @ref="category.Ref" />
 
-              <MudTextField
+              <MudNumericField
                 @bind-Value="category.Amount"
+                Format="C"
+                Culture="_culture"
                 Immediate="true"
                 Label="Split amount" />
 
@@ -137,7 +142,7 @@
           <div><b>Date:</b> @p.Date.ToString("yyyy-MM-dd")</div>
           <div><b>Type:</b> @p.TransactionType</div>
           <div><b>Payee:</b> @p.Payee</div>
-          <div><b>Total Amount:</b> @p.TotalAmount.ToString("C")</div>
+          <div><b>Total Amount:</b> @p.TotalAmount.ToString("C", CultureInfo.CreateSpecificCulture("pl"))</div>
         </div>
       }
     </MudPaper>
@@ -148,6 +153,8 @@
 <MudPopoverProvider />
 
 @code {
+  private CultureInfo _culture = CultureInfo.CreateSpecificCulture("pl");
+
   // Model for the form.
   private TransactionForm _model = new()
   {
@@ -291,7 +298,7 @@
       Categories = [new() { Name = "", Amount = 0 }]
     };
 
-    StateHasChanged();
+    InvokeAsync(StateHasChanged);
   }
 
   /// <summary>
@@ -331,7 +338,7 @@
 
     var newCategory = new CategoryAmount();
     _model.Categories.Add(newCategory);
-    StateHasChanged();
+    InvokeAsync(StateHasChanged);
 
     if (_model.Categories.Count >= 2)
     {
