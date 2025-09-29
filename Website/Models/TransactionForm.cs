@@ -12,7 +12,7 @@ public class TransactionForm {
   /// <summary>
   /// Type of the transaction. Either "Expense" or "Income".
   /// </summary>
-  public string TransactionType { get; set; } = "Expense";
+  public string TransactionType { get; set; } = "Withdrawl";
 
   /// <summary>
   /// Total amount of the transaction.
