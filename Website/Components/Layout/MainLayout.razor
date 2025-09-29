@@ -13,6 +13,27 @@
     </main>
 </div>
 
+<script suppress-error="BL9992">
+    // Snippet comes from https://chandradev819.in/2022/04/11/how-to-prevent-default-enter-key-behavior-on-entry-screen-in-blazor/
+    // prevent submit on enter
+    document.body.addEventListener('keypress', e => {
+        if (e.which == 13 && !e.target.matches('button[type=submit]')) {
+            const form = e.composedPath().find(e => e.matches('form'))
+            const submitButton = form && form.querySelector('button[type=submit]:enabled');
+            if (submitButton) {
+                const preventSubmit = (e2) => {
+                    e2.preventDefault();
+                    return false;
+                }
+                // Browser emulates submit button click, when enter key is pressed, so we need to prevent that.
+                form.addEventListener('click', preventSubmit, { once: true, capture: true });
+                setTimeout(() => form.removeEventListener('click', preventSubmit, { capture: true }), 0);
+                // better clear the eventlistener despite once:true in case the keypress propagation has been stopped by some other eventhandler
+            }
+        }
+    });
+</script>
+
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
