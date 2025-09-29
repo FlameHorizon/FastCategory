@@ -2,6 +2,8 @@
 @rendermode InteractiveServer
 
 @using FastPayment.Core
+@using System.Runtime.CompilerServices
+@using System.Runtime.InteropServices
 @using Website.Models
 @using MudBlazor.Extensions
 @using System.ComponentModel.DataAnnotations
@@ -26,8 +28,7 @@
 
       <MudSelect 
         @bind-Value="_model.TransactionType" 
-        Label="Transaction type"
-        DateFormat="dd.MM.yyyy">
+        Label="Transaction type" >
         @foreach (var opt in _options)
         {
           <MudSelectItem Value="opt">@opt</MudSelectItem>
@@ -40,10 +41,10 @@
         SearchFunc="SearchRecievers">
       </MudAutocomplete>
 
-      @* ##TODO: Remove up/down arrows at the end of the input *@
       <MudTextField
-        @bind-Value="_model.TotalAmount"
-        Label="Payment Value" />
+        T="decimal"
+        ValueChanged="@(v => UpdateTotalAmount(v))"
+        Label="Amount" />
 
       @* 
         @@FIXME: When enter is pressed to select category, entire form is submitted.
@@ -57,11 +58,13 @@
             <MudAutocomplete
               @bind-Value="category.Name"
               Label="Category"
-              SearchFunc="SearchCategory"/>
+              SearchFunc="SearchCategory"
+              @ref="category.Ref"/>
 
             <MudTextField
               @bind-Value="category.Amount"
-              Label="Payment Value" />
+              Immediate="true"
+              Label="Split amount" />
 
             <MudIconButton 
               Icon="@Icons.Material.Filled.Delete" 
@@ -100,20 +103,21 @@
 
 @code {
   // Model for the form.
-  private readonly TransactionForm _model = new() {
-    Categories = [new (){ Name = "", Amount = 0}]
+  private readonly TransactionForm _model = new()
+  {
+    Categories = [new() { Name = "", Amount = 0 }]
   };
 
   private static Home? _instance;
 
   private IEnumerable<string> _options = [
-    "Deposit", 
-    "Withdrawl", 
+    "Deposit",
+    "Withdrawl",
     "Transfer"
   ];
 
-  private string[] _searchSpace = [ 
-    "Jedzenie:Dom", 
+  private string[] _searchSpace = [
+    "Jedzenie:Dom",
     "Jedzenie:Miasto",
     "Jedzenie:Fast Food"
   ];
@@ -126,7 +130,7 @@
     "Amazon",
     "MediaMarkt",
   ];
-  
+
   public Home()
   {
     _instance = this;
@@ -141,12 +145,12 @@
   }
 
   private async Task<IEnumerable<string>> SearchCategory(
-    string phrase, 
-    CancellationToken token)
+  string phrase,
+  CancellationToken token)
   {
     if (string.IsNullOrEmpty(phrase))
     {
-        return _searchSpace;
+      return _searchSpace;
     }
 
     var engine = new CategorySearchEngine(_searchSpace);
@@ -202,12 +206,12 @@
   {
     if (e.AltKey && e.Key == "a")
     {
-        Console.WriteLine("You pressed ALT + A");
-        // Use InvokeAsync to ensure UI update is on the correct dispatcher
-        if (_instance != null)
-        {
-            return _instance.InvokeAsync(() => _instance.AddCategoryAsync());
-        }
+      Console.WriteLine("You pressed ALT + A");
+      // Use InvokeAsync to ensure UI update is on the correct dispatcher
+      if (_instance != null)
+      {
+        return _instance.InvokeAsync(() => _instance.AddCategoryAsync());
+      }
     }
 
     return Task.CompletedTask;
@@ -215,8 +219,34 @@
 
   private async Task AddCategoryAsync()
   {
-    _model.Categories.Add(new CategoryAmount());
+    var newCategory = new CategoryAmount();
+    _model.Categories.Add(newCategory);
+
+    if (_model.Categories.Count >= 2)
+    {
+      decimal sum = _model.Categories.Sum(c => c.Amount);
+      decimal diff = _model.TotalAmount - sum;
+
+      if (diff < 0)
+      {
+        diff = 0;
+      }
+      newCategory.Amount = diff;
+    }
+
     await InvokeAsync(StateHasChanged);
+
+    // First, render element to the DOM so that Ref is not null.
+    // Then, focus the newly added category input.
+    if (newCategory.Ref is null)
+    {
+      Console.WriteLine("Ref is null, element can't be focused.");
+      await Task.CompletedTask;
+    }
+    else
+    {
+      await newCategory.Ref.FocusAsync();
+    }
   }
 
   private void RemoveCategory(CategoryAmount category)
@@ -229,17 +259,31 @@
   }
 
   private async Task<IEnumerable<string>> SearchRecievers(
-    string phrase, 
-    CancellationToken token)
+  string phrase,
+  CancellationToken token)
   {
     if (string.IsNullOrEmpty(phrase))
     {
-        return _recievers;
+      return _recievers;
     }
 
     IEnumerable<string> result = _recievers
-      .Where(x => x.StartsWith(phrase, StringComparison.OrdinalIgnoreCase));
+    .Where(x => x.StartsWith(phrase, StringComparison.OrdinalIgnoreCase));
 
     return result;
+  }
+
+  /// <summary>
+  /// Update total amount and adjust the first category amount if there is only one category.
+  /// </summary>
+  /// <param name="value">New value of TotalAmount</param>
+  private void UpdateTotalAmount(decimal value)
+  {
+    _model.TotalAmount = value;
+
+    if (_model.Categories.Count == 1)
+    {
+      _model.Categories[0].Amount = value;
+    }
   }
 }

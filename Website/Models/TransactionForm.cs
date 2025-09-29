@@ -1,3 +1,5 @@
+using MudBlazor;
+
 namespace Website.Models;
 
 public class TransactionForm {
@@ -33,8 +35,13 @@ public class TransactionForm {
   public string Notes { get; set; } = string.Empty;
 }
 
-public class CategoryAmount
-{
-    public string Name { get; set; } = string.Empty;
-    public double Amount { get; set; }
+public class CategoryAmount {
+  public string Name { get; set; } = string.Empty;
+  public decimal Amount { get; set; }
+
+  /// <summary>
+  /// Reference to the MudAutocomplete component for this category.
+  /// Note: This should not be a part of the actual data model. It's included here for convenience in the UI layer.
+  /// </summary>
+  public MudAutocomplete<string>? Ref { get; set; }
 }
