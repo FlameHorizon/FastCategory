@@ -17,7 +17,7 @@ window.JsFunctions = {
         };
 
         window.document.addEventListener('keydown', function (e) {
-            DotNet.invokeMethodAsync('Website', 'JsKeyDown', serializeEvent(e))
+            DotNet.invokeMethodAsync('Website', 'JsKeyDown', serializeEvent(e));
         });
     }
 };
