@@ -1,5 +1,6 @@
 ﻿namespace FastPayment.Core;
 
+// @@TODO: Rename to Transaction?
 public class Payment {
 
   public DateTime Date { get; }
@@ -25,9 +26,10 @@ public class Payment {
 
     // Validation
 
-    if (categories.Sum(x => x.Amount) != totalAmount) {
+    decimal sum = categories.Sum(x => x.Amount);
+    if (sum != totalAmount) {
       throw new ArgumentException(
-        "Sum of all categories must be equal to total amount.");
+        $"Sum of all categories '{sum}' must be equal to total amount '{totalAmount}'.");
     }
   }
 }
