@@ -19,6 +19,8 @@
     @bind-Date="_model.Date" 
     For="@(() => _model.Date)"
     @onkeydown="OnKeyDownDate"
+    DateFormat="yyyy-MM-dd"
+    ShowToolbar="false"
     autofocus/>
 
   <MudSelect 
@@ -113,6 +115,11 @@
       _model.Date = DateTime.Today;
       return;
     }
+
+    @* 
+      @@FIXME: There is a bug when user presses CTRL + = or CTRL + - to zoom in or out 
+      in the browser. The date changes as well. Find a way to prevent this.
+    *@
 
     if (args.Key == "=")
     {
