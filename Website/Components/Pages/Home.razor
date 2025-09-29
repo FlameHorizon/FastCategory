@@ -8,8 +8,6 @@
 
 @inject IJSRuntime JSRuntime
 
-@* ##TODO: Add ability to insert multiple categories into one trasaction *@
-
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
@@ -58,16 +56,30 @@
         Find a way to prevent this and allow user to submit the form only when
         the "Save" button is pressed or when enter is pressed while focusing "Save" button.
       *@
-      <div class="d-flex">
-        <MudAutocomplete
-          @bind-Value="_model.Categories"
-          Label="Category"
-          SearchFunc="Search"/>
+      <div>
+        @foreach (var category in _model.Categories)
+        {
+          <div class="d-flex">
+            <MudAutocomplete
+              @bind-Value="category.Name"
+              Label="Category"
+              SearchFunc="Search"/>
 
-        @* ##TODO: Remove up/down arrows at the end of the input *@
-        <MudTextField
-          @bind-Value="_model.TotalAmount"
-          Label="Payment Value" />
+            <MudTextField
+              @bind-Value="category.Amount"
+              Label="Payment Value" />
+
+            <MudIconButton 
+              Icon="@Icons.Material.Filled.Delete" 
+              Color="Color.Primary" 
+              OnClick="@(() => RemoveCategory(category))" />
+          </div>
+        }
+
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(() => AddCategoryAsync())">
+          <MudIcon Icon="@Icons.Material.Filled.Add" /> Add
+        </MudButton>
+
       </div>
 
       <MudButton 
@@ -86,7 +98,11 @@
 
 @code {
   // Model for the form.
-  private readonly TransactionForm _model = new();
+  private readonly TransactionForm _model = new() {
+    Categories = [new (){ Name = "", Amount = 0}]
+  };
+
+  private static Home? _instance;
 
   private IEnumerable<string> _options = [
     "Deposit", 
@@ -104,10 +120,18 @@
     "Rec1",
     "Rec2"
   ];
+  
+  public Home()
+  {
+    _instance = this;
+  }
 
   protected async override Task OnAfterRenderAsync(bool firstRender)
   {
+    if (firstRender)
+    {
       await JSRuntime.InvokeVoidAsync("JsFunctions.addKeyboardListenerEvent");
+    }
   }
 
   private async Task<IEnumerable<string?>> Search(
@@ -173,12 +197,31 @@
   [JSInvokable]
   public static Task JsKeyDown(KeyboardEventArgs e)
   {
-    @* @@TODO: When key combo has been pressed (yet to be defined), add next pair of category - value to form. *@
-    if (e.CtrlKey && e.Key == "a")
+    if (e.AltKey && e.Key == "a")
     {
-      Console.WriteLine("You pressed CTRL + A");
+        Console.WriteLine("You pressed ALT + A");
+        // Use InvokeAsync to ensure UI update is on the correct dispatcher
+        if (_instance != null)
+        {
+            return _instance.InvokeAsync(() => _instance.AddCategoryAsync());
+        }
     }
 
     return Task.CompletedTask;
+  }
+
+  private async Task AddCategoryAsync()
+  {
+    _model.Categories.Add(new CategoryAmount());
+    await InvokeAsync(StateHasChanged);
+  }
+
+  private void RemoveCategory(CategoryAmount category)
+  {
+    if (_model.Categories.Count > 1 && category != null)
+    {
+      _model.Categories.Remove(category);
+      StateHasChanged();
+    }
   }
 }

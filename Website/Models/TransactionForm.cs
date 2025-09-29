@@ -25,10 +25,16 @@ public class TransactionForm {
   /// <summary>
   /// Categories associated with the transaction.
   /// </summary>
-  public string Categories { get; set; } = string.Empty; // Comma-separated list of categories.
+  public List<CategoryAmount> Categories { get; set; } = [];
 
   /// <summary>
   /// Additional notes about the transaction.
   /// </summary>
   public string Notes { get; set; } = string.Empty;
+}
+
+public class CategoryAmount
+{
+    public string Name { get; set; } = string.Empty;
+    public double Amount { get; set; }
 }
