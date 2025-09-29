@@ -16,37 +16,31 @@ public class CategorySearchEngine {
     foreach (var el in _searchSpace) {
       string[] inputSplit = input.Split(":");
 
-      string inputCategory = inputSplit[0].Trim();;
+      string inputCategory = inputSplit[0].Trim(); ;
       string? inputSubcategory = null;
 
-      if (inputSplit.Count() == 2)
-      {
+      if (inputSplit.Count() == 2) {
         inputSubcategory = inputSplit[1].Trim();
       }
-      
+
       string[] categorySplit = el.Split(":");
       string candidateCategory = categorySplit[0].Trim();
       string? candidateSubcategory = null;
 
-      if (inputSplit.Count() == 2)
-      {
-        candidateSubcategory = categorySplit[1].Trim();        
+      if (inputSplit.Count() == 2) {
+        candidateSubcategory = categorySplit[1].Trim();
       }
 
       // We can't compare subcategories against each other 
       // if one is null.
-      if (inputSubcategory is null || candidateSubcategory is null)
-      {
-        if (candidateCategory.StartsWith(inputCategory))
-        {
+      if (inputSubcategory is null || candidateSubcategory is null) {
+        if (candidateCategory.StartsWith(inputCategory)) {
           result.Add(el);
         }
       }
-      else
-      {
-        if (candidateCategory.StartsWith(inputCategory) 
-          && candidateSubcategory.StartsWith(inputSubcategory))
-        {
+      else {
+        if (candidateCategory.StartsWith(inputCategory)
+          && candidateSubcategory.StartsWith(inputSubcategory)) {
           result.Add(el);
         }
       }
