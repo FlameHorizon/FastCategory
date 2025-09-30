@@ -212,8 +212,7 @@
 
     var engine = new CategorySearchEngine(_searchSpace);
 
-    // ##TODO: Make sure search is case-insensitive.
-    IEnumerable<string> result = engine.Search(phrase);
+    IEnumerable<string> result = engine.Search(phrase, StringComparison.OrdinalIgnoreCase);
     return result;
   }
 
