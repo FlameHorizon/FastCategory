@@ -56,6 +56,13 @@ D[PLN]
   }
 
   public QifBuilder AddTransaction(Payment payment) {
+    // @@TODO: Not all payment/transactions are expenses.
+    // We should handle income as well.
+    // For now, we assume that all transactions are expenses.
+    // This means that total amount will be negative.
+    // If payment/transaction is income, then total amount
+    // should be positive.
+
     StartTransaction();
     WithDate(payment.Date);
     WithTotalCost(payment.TotalAmount);
