@@ -33,6 +33,7 @@
 *@
 
 @inject IJSRuntime JSRuntime
+@inject Microsoft.Extensions.Options.IOptions<AppSettings> AppSettingsOptions
 
 <PageTitle>Home</PageTitle>
 
@@ -84,10 +85,10 @@
           @foreach (var category in _model.Categories)
           {
             <div class="d-flex">
+              @*
+                CoerceValue is needed to allow user to enter new categories.
+              *@
               <MudAutocomplete
-                @*
-                  CoerceValue is needed to allow user to enter new categories.
-                *@
                 @bind-Value="category.Name"
                 Label="Category"
                 CoerceValue="true"
@@ -199,24 +200,19 @@
     "Transfer"
   ];
 
-  private string[] _searchSpace = [
-    "Jedzenie:Dom",
-    "Jedzenie:Miasto",
-    "Jedzenie:Fast Food"
-  ];
+  private string[] _searchSpace = [];
 
-  private string[] _recievers = [
-    "Biedronka",
-    "Lidl",
-    "Żabka",
-    "Allegro",
-    "Amazon",
-    "MediaMarkt",
-  ];
+  private string[] _recievers = [];
 
   public Home()
   {
     _instance = this;
+  }
+
+  protected override void OnInitialized()
+  {
+    _searchSpace = AppSettingsOptions.Value.TransactionCategories.ToArray();
+    _recievers = AppSettingsOptions.Value.Recievers.ToArray();
   }
 
   protected async override Task OnAfterRenderAsync(bool firstRender)
