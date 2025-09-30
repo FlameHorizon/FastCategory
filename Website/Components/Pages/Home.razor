@@ -418,22 +418,18 @@
   /// </summary>
   private async Task ExportToDisc()
   {
-    // @@TODO: How are you going to export transaction which has multiple categories?
+    var builder = new QifBuilder();
+    foreach (var payment in _payments)
+    {
+      builder = builder.AddTransaction(payment);
+    }
 
-    // @@TEST: For now, just download empty file to see how download works.
-    // Download works. Now implement actual export.
+    string qifContent = builder.Build();
+    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(qifContent);
+    var s = new MemoryStream(bytes);
 
-    Stream s = GetFileStream();
     var fileName = $"transactions-{DateTime.Now:yyyyMMddHHmmss}.qif";
     using var streamRef = new DotNetStreamReference(stream: s);
     await JSRuntime.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-  }
-
-  private Stream GetFileStream()
-  {
-    // @@TODO: For debug purposes, return empty stream.
-    var randomBinaryData = new byte[50 * 1024];
-    var ms = new MemoryStream(randomBinaryData);
-    return ms;
   }
 }
