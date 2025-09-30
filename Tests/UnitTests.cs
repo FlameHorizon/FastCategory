@@ -104,4 +104,51 @@ public class UnitTests {
 
     Assert.Equal(expected, actual);
   }
+
+  [Fact]
+  public void QifBuilder_Builds_CorrectQifString() {
+    // Builder should already contain default header
+    // which will be used most often by me.
+    // This is the assumption which I've made myself
+    // to make life easier.
+    var builder = new QifBuilder();
+
+    const string expected =
+"""
+!Account
+NWspólne
+TInvoice
+D[PLN]
+
+""";
+
+    string actual = builder.Build();
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Fact]
+  public void QifBuilder_Builds_WithAdditionalSetup() {
+    var builder = new QifBuilder();
+    string actual = builder
+      .StartTransaction()
+      .WithDate(DateTime.Parse("2025-08-29"))
+      .WithTotalCost(135.04m)
+      .WithPayee("Biedronka")
+      .WithSplit("Jedzenie:Sok")
+      .WithSplitAmount(5.49m)
+      .WithSplit("Jedzenie:Dom")
+      .WithSplitAmount(129.55m)
+      .EndTransaction()
+      .Build();
+
+    Assert.Contains("2025-08-29", actual);
+    Assert.Contains("T-135.04", actual);
+    Assert.Contains("PBiedronka", actual);
+    Assert.Contains("SJedzenie:Sok", actual);
+    Assert.Contains("$-5.49", actual);
+    Assert.Contains("SJedzenie:Dom", actual);
+    Assert.Contains("$-129.55", actual);
+    Assert.EndsWith("^", actual);
+  }
 }
