@@ -5,13 +5,28 @@ public class CategorySearchEngine {
 
   public CategorySearchEngine(IEnumerable<string> searchSpace) {
 
-    if (searchSpace is null) {
-      throw new ArgumentNullException(nameof(searchSpace));
-    }
+    ArgumentNullException.ThrowIfNull(searchSpace);
     _searchSpace = searchSpace;
   }
 
+  /// <summary>
+  /// Searches the search space for categories and subcategories
+  /// that start with the input string. Search is case-sensitive.
+  /// </summary>
+  /// <param name="input">String which might contains category and subcategory separated by colon.</param>
+  /// <returns>Return all possible matches which starts with category or subcategory.</returns>
   public IEnumerable<string> Search(string input) {
+    return Search(input, StringComparison.Ordinal);
+  }
+
+  /// <summary>
+  /// Searches the search space for categories and subcategories 
+  /// that start with the input string using the specified comparison type.
+  /// </summary>
+  /// <param name="input">String which might contains category and subcategory separated by colon.</param>
+  /// <param name="comparisonType">Specifies how string should be compared</param>
+  /// <returns>Return all possible matches which starts with category or subcategory.</returns>
+  public IEnumerable<string> Search(string input, StringComparison comparisonType) {
     List<string> result = [];
     foreach (var el in _searchSpace) {
       string[] inputSplit = input.Split(":");
@@ -19,7 +34,7 @@ public class CategorySearchEngine {
       string inputCategory = inputSplit[0].Trim(); ;
       string? inputSubcategory = null;
 
-      if (inputSplit.Count() == 2) {
+      if (inputSplit.Length == 2) {
         inputSubcategory = inputSplit[1].Trim();
       }
 
@@ -27,7 +42,7 @@ public class CategorySearchEngine {
       string candidateCategory = categorySplit[0].Trim();
       string? candidateSubcategory = null;
 
-      if (inputSplit.Count() == 2) {
+      if (inputSplit.Length == 2) {
         candidateSubcategory = categorySplit[1].Trim();
       }
 
@@ -39,8 +54,8 @@ public class CategorySearchEngine {
         }
       }
       else {
-        if (candidateCategory.StartsWith(inputCategory)
-          && candidateSubcategory.StartsWith(inputSubcategory)) {
+        if (candidateCategory.StartsWith(inputCategory, comparisonType)
+          && candidateSubcategory.StartsWith(inputSubcategory, comparisonType)) {
           result.Add(el);
         }
       }
