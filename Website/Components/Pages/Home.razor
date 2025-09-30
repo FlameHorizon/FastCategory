@@ -6,12 +6,13 @@
 @using System.Runtime.InteropServices
 @using System.Threading.Tasks
 @using System.Globalization
+@using System.Diagnostics.CodeAnalysis
 @using Website.Models
 @using MudBlazor.Extensions
 @using System.ComponentModel.DataAnnotations
 
 @* 
-  ##BUG: There is a bug in the application which prevents adding new split categories
+  @@BUG: There is a bug in the application which prevents adding new split categories
   or saving them using keyboard shortcuts when more than one tab open in the browser
   with the application.
 
@@ -151,6 +152,20 @@
 
 <MudThemeProvider />
 <MudPopoverProvider />
+
+<script>
+  window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+    const arrayBuffer = await contentStreamReference.arrayBuffer();
+    const blob = new Blob([arrayBuffer]);
+    const url = URL.createObjectURL(blob);
+    const anchorElement = document.createElement('a');
+    anchorElement.href = url;
+    anchorElement.download = fileName ?? '';
+    anchorElement.click();
+    anchorElement.remove();
+    URL.revokeObjectURL(url);
+  }
+</script>
 
 @code {
   private CultureInfo _culture = CultureInfo.CreateSpecificCulture("pl");
@@ -397,8 +412,28 @@
     }
   }
 
-  private void ExportToDisc()
+
+  /// <summary>
+  /// Export all saved transactions into QIF format.
+  /// </summary>
+  private async Task ExportToDisc()
   {
-    Console.WriteLine("Exporting to disc...");
+    // @@TODO: How are you going to export transaction which has multiple categories?
+
+    // @@TEST: For now, just download empty file to see how download works.
+    // Download works. Now implement actual export.
+
+    Stream s = GetFileStream();
+    var fileName = $"transactions-{DateTime.Now:yyyyMMddHHmmss}.qif";
+    using var streamRef = new DotNetStreamReference(stream: s);
+    await JSRuntime.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+  }
+
+  private Stream GetFileStream()
+  {
+    // @@TODO: For debug purposes, return empty stream.
+    var randomBinaryData = new byte[50 * 1024];
+    var ms = new MemoryStream(randomBinaryData);
+    return ms;
   }
 }
