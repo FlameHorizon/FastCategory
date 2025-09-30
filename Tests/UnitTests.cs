@@ -57,6 +57,17 @@ public class UnitTests {
     Assert.Equal(new List<string> { "Datek" }, actual);
   }
 
+  [Fact]
+  public void Search_Returns_ResultsWhileSeachingForCategoryAndSubcategoy_ButSearchSpaceHasOnlyCategory() {
+    List<string> searchSpace = new() { "Datek", "Dziecko", "Działka" };
+    var se = new CategorySearchEngine(searchSpace);
+
+    IEnumerable<string> actual = se.Search("Dat:Sub");
+
+    Assert.Equal(new List<string> { "Datek" }, actual);
+  }
+
+
   [Theory]
   [InlineData("Inne wydatki: B")]
   [InlineData("I:B")]

@@ -42,7 +42,8 @@ public class CategorySearchEngine {
       string candidateCategory = categorySplit[0].Trim();
       string? candidateSubcategory = null;
 
-      if (inputSplit.Length == 2) {
+      if (inputSplit.Length == 2 && categorySplit.Length == 2) {
+
         candidateSubcategory = categorySplit[1].Trim();
       }
 
