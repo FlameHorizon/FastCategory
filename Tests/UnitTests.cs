@@ -133,22 +133,26 @@ D[PLN]
     string actual = builder
       .StartTransaction()
       .WithDate(DateTime.Parse("2025-08-29"))
-      .WithTotalCost(135.04m)
+      .WithTotalCost(136.04m)
       .WithPayee("Biedronka")
       .WithSplit("Jedzenie:Sok")
       .WithSplitAmount(5.49m)
       .WithSplit("Jedzenie:Dom")
       .WithSplitAmount(129.55m)
+      .WithSplit("Jedzenie:Inne")
+      .WithSplitAmount(1.00m)
       .EndTransaction()
       .Build();
 
-    Assert.Contains("2025-08-29", actual);
-    Assert.Contains("T-135.04", actual);
+    Assert.Contains("D2025-08-29", actual);
+    Assert.Contains("T-136.04", actual);
     Assert.Contains("PBiedronka", actual);
     Assert.Contains("SJedzenie:Sok", actual);
     Assert.Contains("$-5.49", actual);
     Assert.Contains("SJedzenie:Dom", actual);
     Assert.Contains("$-129.55", actual);
+    Assert.Contains("SJedzenie:Inne", actual);
+    Assert.Contains("$-1.00", actual);
     Assert.EndsWith("^", actual);
   }
 }

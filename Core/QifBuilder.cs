@@ -14,7 +14,6 @@ D[PLN]
   private readonly StringBuilder _sb = new();
 
   public QifBuilder() {
-
   }
 
   public string Build() {
@@ -22,12 +21,12 @@ D[PLN]
   }
 
   public QifBuilder WithDate(DateTime dt) {
-    _sb.AppendLine(dt.ToString("yyyy-MM-dd"));
+    _sb.AppendLine("D" + dt.ToString("yyyy-MM-dd"));
     return this;
   }
 
   public QifBuilder WithTotalCost(decimal value) {
-    _sb.AppendLine("T-" + value.ToString());
+    _sb.AppendLine("T-" + value.ToString("F2"));
     return this;
   }
 
@@ -42,7 +41,7 @@ D[PLN]
   }
 
   public QifBuilder WithSplitAmount(decimal value) {
-    _sb.AppendLine("$-" + value.ToString());
+    _sb.AppendLine("$-" + value.ToString("F2"));
     return this;
   }
 
@@ -50,8 +49,26 @@ D[PLN]
     _sb.AppendLine("^");
     return this;
   }
+
   public QifBuilder EndTransaction() {
     _sb.AppendLine("^");
+    return this;
+  }
+
+  public QifBuilder AddTransaction(Payment payment) {
+    StartTransaction();
+    WithDate(payment.Date);
+    WithTotalCost(payment.TotalAmount);
+    WithPayee(payment.Payee);
+
+    if (payment.Categories != null) {
+      foreach (var cat in payment.Categories) {
+        WithSplit(cat.Name + ":" + cat.Subcategory);
+        WithSplitAmount(cat.Amount);
+      }
+    }
+
+    EndTransaction();
     return this;
   }
 }
