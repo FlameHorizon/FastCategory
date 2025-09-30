@@ -80,4 +80,28 @@ public class UnitTests {
 
     Assert.Equal(expected, actual);
   }
+
+  [Theory]
+  [InlineData("inne wydatki: b")]
+  [InlineData("I:b")]
+  [InlineData("inne:b")]
+  public void Search_IsCaseSensitive(string phrase) {
+    List<string> searchSpace = new() {
+      "Inne wydatki: Art. papiernicze",
+      "Inne wydatki: Baterie",
+      "Inne wydatki: Bizuteria",
+      "Baterie: Inne"
+    };
+
+    var se = new CategorySearchEngine(searchSpace);
+
+    IEnumerable<string> actual = se.Search(phrase, StringComparison.OrdinalIgnoreCase);
+
+    List<string> expected = new() {
+      "Inne wydatki: Baterie",
+      "Inne wydatki: Bizuteria"
+    };
+
+    Assert.Equal(expected, actual);
+  }
 }
