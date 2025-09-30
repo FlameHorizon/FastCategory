@@ -60,9 +60,16 @@
           }
         </MudSelect>
 
+        @* 
+           When the user types something that is not on the list and CoerceValue is true, 
+           the Value will be overwritten with the user input which allows it to be 
+           passed to the validation function.
+         *@
+         
         <MudAutocomplete
           @bind-Value="_model.Payee"
           Label="Reciever"
+          CoerceValue="true"
           SearchFunc="SearchRecievers">
         </MudAutocomplete>
 
@@ -307,10 +314,13 @@
 
     Console.WriteLine("Form is valid");
 
+    // To speed up adding new transactions, reuse the same date.
     _model = new TransactionForm
     {
       Categories = [new() { Name = "", Amount = 0 }]
     };
+
+    _model.Date = result.Date;
 
     InvokeAsync(StateHasChanged);
   }
