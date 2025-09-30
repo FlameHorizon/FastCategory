@@ -162,7 +162,7 @@
   </MudItem>
 </div>
 
-<MudThemeProvider />
+<MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode"/>
 <MudPopoverProvider />
 
 <script>
@@ -180,6 +180,11 @@
 </script>
 
 @code {
+
+  // Control dark mode based on system preference.
+  private bool _isDarkMode = false;
+  private MudThemeProvider? _mudThemeProvider;
+  
   private CultureInfo _culture = CultureInfo.CreateSpecificCulture("pl");
 
   // Model for the form.
@@ -219,7 +224,9 @@
   {
     if (firstRender)
     {
+      _isDarkMode = await _mudThemeProvider.GetSystemPreference();
       await JSRuntime.InvokeVoidAsync("JsFunctions.addKeyboardListenerEvent");
+      StateHasChanged();
     }
   }
 
