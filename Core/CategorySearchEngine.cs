@@ -27,17 +27,16 @@ public class CategorySearchEngine {
   /// <param name="comparisonType">Specifies how string should be compared</param>
   /// <returns>Return all possible matches which starts with category or subcategory.</returns>
   public IEnumerable<string> Search(string input, StringComparison comparisonType) {
+    string[] inputSplit = input.Split(":");
+    string inputCategory = inputSplit[0].Trim();
+    string? inputSubcategory = null;
+
+    if (inputSplit.Length == 2) {
+      inputSubcategory = inputSplit[1].Trim();
+    }
+
     List<string> result = [];
     foreach (var el in _searchSpace) {
-      string[] inputSplit = input.Split(":");
-
-      string inputCategory = inputSplit[0].Trim(); ;
-      string? inputSubcategory = null;
-
-      if (inputSplit.Length == 2) {
-        inputSubcategory = inputSplit[1].Trim();
-      }
-
       string[] categorySplit = el.Split(":");
       string candidateCategory = categorySplit[0].Trim();
       string? candidateSubcategory = null;
