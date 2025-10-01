@@ -57,17 +57,6 @@ public class UnitTests {
     Assert.Equal(new List<string> { "Datek" }, actual);
   }
 
-  [Fact]
-  public void Search_Returns_ResultsWhileSeachingForCategoryAndSubcategoy_ButSearchSpaceHasOnlyCategory() {
-    List<string> searchSpace = new() { "Datek", "Dziecko", "Działka" };
-    var se = new CategorySearchEngine(searchSpace);
-
-    IEnumerable<string> actual = se.Search("Dat:Sub");
-
-    Assert.Equal(new List<string> { "Datek" }, actual);
-  }
-
-
   [Theory]
   [InlineData("Inne wydatki: B")]
   [InlineData("I:B")]
@@ -77,7 +66,29 @@ public class UnitTests {
       "Inne wydatki: Art. papiernicze",
       "Inne wydatki: Baterie",
       "Inne wydatki: Bizuteria",
-      "Baterie: Inne"
+      "Baterie: Inne",
+    };
+
+    var se = new CategorySearchEngine(searchSpace);
+
+    IEnumerable<string> actual = se.Search(phrase);
+
+    List<string> expected = new() {
+      "Inne wydatki: Baterie",
+      "Inne wydatki: Bizuteria"
+    };
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Fact]
+  public void Search_Should_NotIncludeCandidatesWithoutSubcategory_IfSubcategoryWasDefinedInInput() {
+    string phrase = "Inne:B";
+    List<string> searchSpace = new() {
+      "Inne wydatki: Art. papiernicze",
+      "Inne wydatki: Baterie",
+      "Inne wydatki: Bizuteria",
+      "Inne zakupy",
     };
 
     var se = new CategorySearchEngine(searchSpace);

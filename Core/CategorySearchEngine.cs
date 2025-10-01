@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace FastPayment.Core;
 
 public class CategorySearchEngine {
@@ -20,7 +22,7 @@ public class CategorySearchEngine {
   }
 
   /// <summary>
-  /// Searches the search space for categories and subcategories 
+  /// Searches the search space for categories and subcategories
   /// that start with the input string using the specified comparison type.
   /// </summary>
   /// <param name="input">String which might contains category and subcategory separated by colon.</param>
@@ -29,34 +31,46 @@ public class CategorySearchEngine {
   public IEnumerable<string> Search(string input, StringComparison comparisonType) {
     string[] inputSplit = input.Split(":");
     string inputCategory = inputSplit[0].Trim();
-    string? inputSubcategory = null;
-
-    if (inputSplit.Length == 2) {
-      inputSubcategory = inputSplit[1].Trim();
-    }
+    string? inputSubcategory = inputSplit.Length == 2 ? inputSplit[1].Trim() : null;
 
     List<string> result = [];
     foreach (var el in _searchSpace) {
-      string[] categorySplit = el.Split(":");
-      string candidateCategory = categorySplit[0].Trim();
-      string? candidateSubcategory = null;
+      string[] candidateSplit = el.Split(":");
+      string candidateCategory = candidateSplit[0].Trim();
+      string? candidateSubcategory = candidateSplit.Length == 2 ? candidateSplit[1].Trim() : null;
 
-      if (inputSplit.Length == 2 && categorySplit.Length == 2) {
+      // Category should be always available. Sub., sometimes.
+      Debug.Assert(
+        string.IsNullOrEmpty(candidateCategory) == false,
+        "Category for candidate should never be empty.");
 
-        candidateSubcategory = categorySplit[1].Trim();
+      // It is up to input to define how are we searching.
+      // Search for category and subcategory if input and candidate has both.
+      // It is implicitly said that candidate always has category.
+      if (string.IsNullOrEmpty(inputCategory) == false
+        && string.IsNullOrEmpty(inputSubcategory) == false) {
+
+        if (string.IsNullOrEmpty(candidateSubcategory) == false) {
+          if (candidateCategory.StartsWith(inputCategory, comparisonType)
+            && candidateSubcategory.StartsWith(inputSubcategory, comparisonType)) {
+            result.Add(el);
+          }
+          else {
+            continue;
+          }
+        }
       }
-
-      // We can't compare subcategories against each other 
-      // if one is null.
-      if (inputSubcategory is null || candidateSubcategory is null) {
-        if (candidateCategory.StartsWith(inputCategory, comparisonType)
-          && string.IsNullOrEmpty(inputCategory) == false) {
+      // Search by category only.
+      else if (string.IsNullOrEmpty(inputCategory) == false) {
+        if (candidateCategory.StartsWith(inputCategory, comparisonType)) {
           result.Add(el);
         }
       }
-      else {
-        if (candidateCategory.StartsWith(inputCategory, comparisonType)
-          && candidateSubcategory.StartsWith(inputSubcategory, comparisonType)) {
+      // Search by subcategory only, if possible.
+      else if (string.IsNullOrEmpty(inputSubcategory) == false
+        && string.IsNullOrEmpty(candidateSubcategory) == false) {
+        // Seach by just using sub.
+        if (candidateSubcategory.StartsWith(inputSubcategory, comparisonType)) {
           result.Add(el);
         }
       }
