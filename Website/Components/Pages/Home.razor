@@ -182,7 +182,8 @@
 @code {
 
   // Control dark mode based on system preference.
-  private bool _isDarkMode = false;
+  // @@TODO: Try to do something about 'flashbang' when the page is loaded.
+  private bool _isDarkMode = true;
   private MudThemeProvider? _mudThemeProvider;
   
   private CultureInfo _culture = CultureInfo.CreateSpecificCulture("pl");
@@ -227,7 +228,7 @@
   {
     if (firstRender)
     {
-      _isDarkMode = await _mudThemeProvider.GetSystemPreference();
+      _isDarkMode = await _mudThemeProvider.GetSystemDarkModeAsync();
       await JSRuntime.InvokeVoidAsync("JsFunctions.addKeyboardListenerEvent");
       StateHasChanged();
     }
