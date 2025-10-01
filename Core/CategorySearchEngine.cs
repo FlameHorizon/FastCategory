@@ -49,7 +49,8 @@ public class CategorySearchEngine {
       // We can't compare subcategories against each other 
       // if one is null.
       if (inputSubcategory is null || candidateSubcategory is null) {
-        if (candidateCategory.StartsWith(inputCategory)) {
+        if (candidateCategory.StartsWith(inputCategory, comparisonType)
+          && string.IsNullOrEmpty(inputCategory) == false) {
           result.Add(el);
         }
       }

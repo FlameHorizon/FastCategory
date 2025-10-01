@@ -117,6 +117,26 @@ public class UnitTests {
   }
 
   [Fact]
+  public void Search_ShouldNot_SearchByCategoryIfPhraseDoesNotProvideIt() {
+    string phrase = ":Praca";
+
+    List<string> searchSpace = [
+      "Art. Papiernicze",
+      "Praca:Komputer",
+      "Wynagordzenie:Praca"
+    ];
+
+    var se = new CategorySearchEngine(searchSpace);
+    IEnumerable<string> actual = se.Search(phrase, StringComparison.OrdinalIgnoreCase);
+
+    List<string> expected = [
+      "Wynagordzenie:Praca"
+    ];
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Fact]
   public void QifBuilder_Builds_CorrectQifString() {
     // Builder should already contain default header
     // which will be used most often by me.
