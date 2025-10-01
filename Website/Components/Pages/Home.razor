@@ -209,6 +209,8 @@
 
   private string[] _recievers = [];
 
+  private CategorySearchEngine _categorySearchEngine;
+
   public Home()
   {
     _instance = this;
@@ -218,6 +220,7 @@
   {
     _searchSpace = AppSettingsOptions.Value.TransactionCategories.ToArray();
     _recievers = AppSettingsOptions.Value.Recievers.ToArray();
+    _categorySearchEngine = new CategorySearchEngine(_searchSpace);
   }
 
   protected async override Task OnAfterRenderAsync(bool firstRender)
@@ -239,9 +242,7 @@
       return _searchSpace;
     }
 
-    var engine = new CategorySearchEngine(_searchSpace);
-
-    IEnumerable<string> result = engine.Search(phrase, StringComparison.OrdinalIgnoreCase);
+    IEnumerable<string> result = _categorySearchEngine.Search(phrase, StringComparison.OrdinalIgnoreCase);
     return result;
   }
 
