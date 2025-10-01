@@ -147,11 +147,11 @@ D[PLN]
       .WithTotalCost(136.04m)
       .WithPayee("Biedronka")
       .WithSplit("Jedzenie:Sok")
-      .WithSplitAmount(5.49m)
+      .WithSplitAmountCost(5.49m)
       .WithSplit("Jedzenie:Dom")
-      .WithSplitAmount(129.55m)
+      .WithSplitAmountCost(129.55m)
       .WithSplit("Jedzenie:Inne")
-      .WithSplitAmount(1.00m)
+      .WithSplitAmountCost(1.00m)
       .EndTransaction()
       .Build();
 
@@ -165,5 +165,25 @@ D[PLN]
     Assert.Contains("SJedzenie:Inne", actual);
     Assert.Contains("$-1.00", actual);
     Assert.EndsWith("^", actual);
+  }
+
+  [Fact]
+  public void QifBuilder_Builds_QifString_WhenPaymentIsDeposit() {
+    var builder = new QifBuilder();
+    var p = new Payment(
+      date: DateTime.Now,
+      transactionType: TransactionTypes.Deposit,
+      totalAmount: 100.00m,
+      payee: "Bank",
+      categories: [new(Name: "Wynagrodzenie", Subcategory: "Praca", Amount: 100.00m)],
+      notes: ""
+    );
+
+    string actual = builder.AddTransaction(p).Build();
+
+    Assert.Contains("T100.00", actual);
+    Assert.Contains("PBank", actual);
+    Assert.Contains("SWynagrodzenie:Praca", actual);
+    Assert.Contains("$100.00", actual);
   }
 }

@@ -40,7 +40,7 @@ D[PLN]
     return this;
   }
 
-  public QifBuilder WithSplitAmount(decimal value) {
+  public QifBuilder WithSplitAmountCost(decimal value) {
     _sb.AppendLine("$-" + value.ToString("F2"));
     return this;
   }
@@ -55,23 +55,43 @@ D[PLN]
     return this;
   }
 
-  public QifBuilder AddTransaction(Payment payment) {
-    // @@TODO: Not all payment/transactions are expenses.
-    // We should handle income as well.
-    // For now, we assume that all transactions are expenses.
-    // This means that total amount will be negative.
-    // If payment/transaction is income, then total amount
-    // should be positive.
+  public QifBuilder WithTotalDeposit(decimal value) {
+    _sb.AppendLine("T" + value.ToString("F2"));
+    return this;
+  }
 
+  public QifBuilder WithSplitAmountDeposit(decimal value) {
+    _sb.AppendLine("$" + value.ToString("F2"));
+    return this;
+  }
+
+  public QifBuilder AddTransaction(Payment payment) {
     StartTransaction();
     WithDate(payment.Date);
-    WithTotalCost(payment.TotalAmount);
+
+    if (payment.TransactionType == TransactionTypes.Widthdrawl) {
+      WithTotalCost(payment.TotalAmount);
+    }
+    else if (payment.TransactionType == TransactionTypes.Deposit) {
+      WithTotalDeposit(payment.TotalAmount);
+    }
+    else {
+      throw new NotSupportedException(
+        $"'{Enum.GetName(payment.TransactionType)}' is not supported transaction type.");
+    }
+
     WithPayee(payment.Payee);
 
     if (payment.Categories != null) {
       foreach (var cat in payment.Categories) {
         WithSplit(cat.Name + ":" + cat.Subcategory);
-        WithSplitAmount(cat.Amount);
+
+        if (payment.TransactionType == TransactionTypes.Widthdrawl) {
+          WithSplitAmountCost(cat.Amount);
+        }
+        else if (payment.TransactionType == TransactionTypes.Deposit) {
+          WithSplitAmountDeposit(cat.Amount);
+        }
       }
     }
 
