@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace FastPayment.Core;
 
 public static class BankStatementParser {
@@ -16,12 +18,12 @@ public static class BankStatementParser {
       }
 
       BankTransaction value = new() {
-        OperationDate = DateTime.Parse(split[0]),
-        CurrencyDate = DateTime.Parse(split[1]),
+        OperationDate = DateTime.Parse(split[0].Trim('"')),
+        CurrencyDate = DateTime.Parse(split[1].Trim('"')),
         TransactionType = GetTransactionType(split[2]),
-        Amount = decimal.Parse(split[3]),
+        Amount = decimal.Parse(split[3].Trim('"')),
         Currency = split[4],
-        BalanceAfterTransaction = decimal.Parse(split[5]),
+        BalanceAfterTransaction = decimal.Parse(split[5].Trim('"')),
         TransactionDescription = split[6],
         UnnamedProperty1 = split[7],
         UnnamedProperty2 = split[8],
@@ -34,6 +36,8 @@ public static class BankStatementParser {
   }
 
   private static BankTransactionType GetTransactionType(string v) {
-    throw new NotImplementedException();
+    // @@FIXME: Right now, return just first available value.
+    // For realase, this has to be properly implemented.
+    return BankTransactionType.AccountTransfer;
   }
 }

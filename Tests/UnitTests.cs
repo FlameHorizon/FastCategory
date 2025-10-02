@@ -217,4 +217,17 @@ D[PLN]
     Assert.Contains("SWynagrodzenie:Praca", actual);
     Assert.Contains("$100.00", actual);
   }
+
+  [Fact]
+  public void Parser_Should_ParseSomething() {
+    // @@FIXME: This is just a smoke test. It does not really check
+    // of validate anything. Just want to see if method can result anything
+    // without crashing.
+    const string input = """
+"2025-10-02","2025-10-01","Wypłata z bankomatu","-100.00","PLN","+100.00","Tytuł: <Some title> ","Lokalizacja: Adres: <Street Name> Miasto: <City Name> Kraj: <Country name>","Data wykonania operacji: 2025-10-01 02:00","Oryginalna kwota operacji: 100.00","Numer karty: <Card number>","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+  }
 }
