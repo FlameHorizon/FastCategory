@@ -22,4 +22,8 @@
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+  <None Include="test_data\1.csv" CopyToOutputDirectory="Always" />
+  </ItemGroup>
+
 </Project>
