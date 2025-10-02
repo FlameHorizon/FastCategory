@@ -1,7 +1,7 @@
 namespace FastPayment.Core;
 
 
-public enum TransactionTypes {
+public enum MMEXTransactionTypes {
   Widthdrawl,
   Deposit,
   Transfer,

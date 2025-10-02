@@ -7,7 +7,7 @@ public class UnitTests {
   public void Check_If_Ctor_Works() {
     var p = new Payment(
       date: DateTime.Parse("2025-01-01 14:00:00"),
-      transactionType: TransactionTypes.Widthdrawl,
+      transactionType: MMEXTransactionTypes.Widthdrawl,
       totalAmount: 100.0m,
       payee: "Maciej Piotrowski",
       categories: [
@@ -20,7 +20,7 @@ public class UnitTests {
     );
 
     Assert.Equal(DateTime.Parse("2025-01-01 14:00:00"), p.Date);
-    Assert.Equal(TransactionTypes.Widthdrawl, p.TransactionType);
+    Assert.Equal(MMEXTransactionTypes.Widthdrawl, p.TransactionType);
     Assert.Equal(100.0m, p.TotalAmount);
     Assert.Equal("Maciej Piotrowski", p.Payee);
     Assert.Equal(new Category("Samochód", "Paliwo", 100.0m), p.Categories.First());
@@ -32,7 +32,7 @@ public class UnitTests {
 
     Action act = () => _ = new Payment(
       date: DateTime.Parse("2025-01-01 14:00:00"),
-      transactionType: TransactionTypes.Widthdrawl,
+      transactionType: MMEXTransactionTypes.Widthdrawl,
       totalAmount: 100.0m,
       payee: "Maciej Piotrowski",
       categories: [
@@ -203,7 +203,7 @@ D[PLN]
     var builder = new QifBuilder();
     var p = new Payment(
       date: DateTime.Now,
-      transactionType: TransactionTypes.Deposit,
+      transactionType: MMEXTransactionTypes.Deposit,
       totalAmount: 100.00m,
       payee: "Bank",
       categories: [new(Name: "Wynagrodzenie", Subcategory: "Praca", Amount: 100.00m)],

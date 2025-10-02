@@ -4,7 +4,7 @@
 public class Payment {
 
   public DateTime Date { get; }
-  public TransactionTypes TransactionType { get; }
+  public MMEXTransactionTypes TransactionType { get; }
   public decimal TotalAmount { get; }
   public string Payee { get; }
   public IEnumerable<Category> Categories { get; }
@@ -12,7 +12,7 @@ public class Payment {
 
   public Payment(
     DateTime date,
-    TransactionTypes transactionType,
+    MMEXTransactionTypes transactionType,
     decimal totalAmount,
     string payee,
     IEnumerable<Category> categories,
