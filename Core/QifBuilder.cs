@@ -69,10 +69,10 @@ D[PLN]
     StartTransaction();
     WithDate(payment.Date);
 
-    if (payment.TransactionType == TransactionTypes.Widthdrawl) {
+    if (payment.TransactionType == MMEXTransactionTypes.Widthdrawl) {
       WithTotalCost(payment.TotalAmount);
     }
-    else if (payment.TransactionType == TransactionTypes.Deposit) {
+    else if (payment.TransactionType == MMEXTransactionTypes.Deposit) {
       WithTotalDeposit(payment.TotalAmount);
     }
     else {
@@ -86,10 +86,10 @@ D[PLN]
       foreach (var cat in payment.Categories) {
         WithSplit(cat.Name + ":" + cat.Subcategory);
 
-        if (payment.TransactionType == TransactionTypes.Widthdrawl) {
+        if (payment.TransactionType == MMEXTransactionTypes.Widthdrawl) {
           WithSplitAmountCost(cat.Amount);
         }
-        else if (payment.TransactionType == TransactionTypes.Deposit) {
+        else if (payment.TransactionType == MMEXTransactionTypes.Deposit) {
           WithSplitAmountDeposit(cat.Amount);
         }
       }

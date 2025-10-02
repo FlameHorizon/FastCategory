@@ -180,6 +180,9 @@
 </script>
 
 @code {
+  // @@TODO: Allow user to upload bank statement and parse it to pre-fill the form.
+  // Once user presses Save, the transaction will be added to the list of payments
+  // and next transaction from the statement will be pre-filled in the form.
 
   // Control dark mode based on system preference.
   // @@TODO: Try to do something about 'flashbang' when the page is loaded.
@@ -280,10 +283,10 @@
     // In a real application, you would check the validation state.
     var transactionType = _model.TransactionType switch
     {
-      "Deposit" => TransactionTypes.Deposit,
-      "Withdrawl" => TransactionTypes.Widthdrawl,
-      "Transfer" => TransactionTypes.Transfer,
-      _ => TransactionTypes.Unknown
+      "Deposit" => MMEXTransactionTypes.Deposit,
+      "Withdrawl" => MMEXTransactionTypes.Widthdrawl,
+      "Transfer" => MMEXTransactionTypes.Transfer,
+      _ => MMEXTransactionTypes.Unknown
     };
 
     var categories = new List<Category>();
@@ -308,7 +311,7 @@
     // 8. Allow users to add notes to the transaction.
     // + 9. Since all transactions will be stored in memory, implement second section where they will be displayed.
 
-    // Convert TransactionModel to Payment entity and save to database.
+    // Convert TransactionModel to Payment entity.
     var result = new Payment
     (
       date: _model.Date!.Value,
