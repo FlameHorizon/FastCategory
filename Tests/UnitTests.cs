@@ -1,4 +1,7 @@
-﻿using FastPayment.Core;
+﻿using System.Reflection;
+using System.Text;
+
+using FastPayment.Core;
 
 namespace Tests;
 
@@ -219,15 +222,218 @@ D[PLN]
   }
 
   [Fact]
-  public void Parser_Should_ParseSomething() {
-    // @@FIXME: This is just a smoke test. It does not really check
-    // of validate anything. Just want to see if method can result anything
-    // without crashing.
+  public void Parser_Should_ParseFirst10Columns() {
     const string input = """
-"2025-10-02","2025-10-01","Wypłata z bankomatu","-100.00","PLN","+100.00","Tytuł: <Some title> ","Lokalizacja: Adres: <Street Name> Miasto: <City Name> Kraj: <Country name>","Data wykonania operacji: 2025-10-01 02:00","Oryginalna kwota operacji: 100.00","Numer karty: <Card number>","",""
+"2025-10-01","2025-10-01","Wypłata z bankomatu","-100.00","PLN","+100.00","Tytuł: <Some title> ","Lokalizacja: Adres: <Street Name> Miasto: <City Name> Kraj: <Country name>","Data wykonania operacji: 2025-10-01 02:00","Oryginalna kwota operacji: 100.00","Numer karty: <Card number>","",""
 """;
 
     IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
     Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal(DateTime.Parse("2025-10-01"), t.OperationDate);
+    Assert.Equal(DateTime.Parse("2025-10-01"), t.CurrencyDate);
+    Assert.Equal(BankTransactionType.AtmWithdrawal, t.TransactionType);
+    Assert.Equal(-100.00m, t.Amount);
+    Assert.Equal("PLN", t.Currency);
+    Assert.Equal(100.00m, t.BalanceAfterTransaction);
+    Assert.Equal("Tytuł: <Some title>", t.TransactionDescription);
+    Assert.Equal("Lokalizacja: Adres: <Street Name> Miasto: <City Name> Kraj: <Country name>", t.UnnamedProperty1);
+    Assert.Equal("Data wykonania operacji: 2025-10-01 02:00", t.UnnamedProperty2);
+    Assert.Equal("Oryginalna kwota operacji: 100.00", t.UnnamedProperty3);
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForAtmWithdrawl() {
+    const string input = """
+"2025-10-01","2025-10-01","Wypłata z bankomatu","-100.00","PLN","+100.00","Tytuł: <Some title> ","Lokalizacja: Adres: <Street Name> Miasto: <City Name> Kraj: <Country name>","Data wykonania operacji: 2025-10-01 02:00","Oryginalna kwota operacji: 100.00","Numer karty: <Card number>","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<Some title>", t.GetTitle());
+    Assert.Equal("<Street Name>", t.GetAddress());
+    Assert.Equal("<City Name>", t.GetCityName());
+    Assert.Equal("<Country name>", t.GetCountryName());
+    Assert.Equal(DateTime.Parse("2025-10-01 02:00:00 AM"), t.GetOperationDateTime());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForStandingOrder() {
+    const string input = """
+"2025-10-01","2025-10-01","Zlecenie stałe","-100.00","PLN","+100.00","Rachunek odbiorcy: <number>","Nazwa odbiorcy: <name>","Tytuł: <title>","","","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<number>", t.GetRecieverBankAccount());
+    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<title>", t.GetTitle());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForCardPayment() {
+    const string input = """
+"2025-10-01","2025-10-01","Płatność kartą","-100.00","PLN","+100.00","Tytuł:  <title>","Lokalizacja: Adres: <address> Miasto: <city> Kraj: <country>","Data wykonania operacji: 2025-10-01 02:00","Oryginalna kwota operacji: 100.00","Numer karty: <number>","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<title>", t.GetTitle());
+    Assert.Equal("<address>", t.GetAddress());
+    Assert.Equal("<city>", t.GetCityName());
+    Assert.Equal("<country>", t.GetCountryName());
+    Assert.Equal(DateTime.Parse("2025-10-01 02:00:00 AM"), t.GetOperationDateTime());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForAccountTransfer() {
+    const string input = """
+"2025-10-01","2025-10-01","Przelew na konto","+100.00","PLN","+100.0","Rachunek nadawcy: <number>","Nazwa nadawcy: <name>","Adres nadawcy: <address>","Tytuł: <title>  ","Referencje własne zleceniodawcy: <number>","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<number>", t.GetSenderBankAccount());
+    Assert.Equal("<name>", t.GetSenderName());
+    Assert.Equal("<address>", t.GetSenderAddress());
+    Assert.Equal("<title>", t.GetTitle());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForIncomingPhoneTransfer() {
+    const string input = """
+"2025-10-01","2025-10-01","Przelew na telefon przychodz. zew.","-100.00","PLN","+100.00","Rachunek odbiorcy: <number>","Nazwa odbiorcy: <name>","Tytuł: <title>","","","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<number>", t.GetRecieverBankAccount());
+    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<title>", t.GetTitle());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForCommision() {
+    const string input = """
+"2025-10-01","2025-10-01","Prowizja","-100.00","PLN","+100.00","<title>","","","","","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<title>", t.GetTitle());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForMobileWebPayment() {
+    const string input = """
+"2025-10-01","2025-10-01","Płatność web - kod mobilny","-100.00","PLN","+100.00","Tytuł: <title>","Numer telefonu: <number>","Lokalizacja: Adres: <address>","'Operacja: <number>","Numer referencyjny: <number>","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<title>", t.GetTitle());
+    Assert.Equal("<address>", t.GetAddress());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForVariableOrder() {
+    const string input = """
+"2025-10-01","2025-10-01","Zlecenie zmienne","-100.00","PLN","+100.00","Rachunek odbiorcy: <number>","Nazwa odbiorcy: <name>","Adres odbiorcy: <address>","Tytuł: <title>","","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<number>", t.GetRecieverBankAccount());
+    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<address>", t.GetAddress());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForOutgoingAccountTransfer() {
+    const string input = """
+"2025-10-01","2025-10-01","Przelew z rachunku","-100.00","PLN","+100.00","Rachunek odbiorcy: <number>","Nazwa odbiorcy: <name>","Tytuł: <title>","Referencje własne zleceniodawcy: <number>","","",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<number>", t.GetRecieverBankAccount());
+    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<title>", t.GetTitle());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForForeignCurrencyTransfer() {
+    const string input = """
+"2025-10-01","2025-10-01","Przelew zagraniczny i walutowy","-100.00","PLN","+100.00","Rachunek odbiorcy: <number>","Nazwa odbiorcy: <name>","Tytuł: <title>","Oryginalna kwota przelewu: <number> <currency>","Kurs przewalutowania: <number>","Opłaty za przelew: <text>","Numer referencyjny przelewu: <text>"
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<number>", t.GetRecieverBankAccount());
+    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<title>", t.GetTitle());
+  }
+
+  [Fact]
+  public void BankTransaction_Should_RetriveAdditionalInformation_FromItsContent_ForAtmWithdrawalMobileCode() {
+    const string input = """
+"2025-10-10","2025-10-10","Wypłata w bankomacie - kod mobilny","-100.00","PLN","+100.00","Tytuł: <title>","Numer telefonu: <number>","Lokalizacja: Adres: <address> Miasto: <city> Kraj: <country>","Bankomat: <name>","'Operacja: <number>","Numer referencyjny: <number>",""
+""";
+
+    IEnumerable<BankTransaction> actual = BankStatementParser.Parse([input], skipHeader: false);
+    Assert.Single(actual);
+
+    BankTransaction t = actual.First();
+    Assert.Equal("<title>", t.GetTitle());
+    Assert.Equal("<address>", t.GetAddress());
+    Assert.Equal("<city>", t.GetCityName());
+    Assert.Equal("<country>", t.GetCountryName());
+  }
+
+  [Fact]
+  public void ParserAndBankTransaction_SmokeTest() {
+    // Requried to get 1250 encoding page.
+    // See: https://stackoverflow.com/a/47017180
+    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+    // Just throw some random bank statement and see if it is capable of processing it.
+    string path = Path.Combine("test_data", "1.csv");
+    IEnumerable<string> data = File.ReadLines(path, Encoding.GetEncoding(1250));
+
+    // If call throws, test automatically failes.
+    IEnumerable<BankTransaction> items = BankStatementParser.Parse(data.ToArray(), skipHeader: true);
+
+    // Here I'm just calling every possible method on BankStatement to make sure it does not crash.
+    foreach (var item in items) {
+      Type t = item.GetType();
+      MethodInfo[] methods = t.GetMethods(BindingFlags.Instance | BindingFlags.Public);
+
+      foreach (var method in methods) {
+        if (method.GetParameters().Length == 0) {
+          method.Invoke(item, null);
+        }
+      }
+    }
   }
 }
