@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
-
-using FastPayment.Core;
+using Core;
 
 namespace Tests;
 

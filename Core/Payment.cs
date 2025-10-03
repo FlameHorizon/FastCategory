@@ -1,4 +1,4 @@
-﻿namespace FastPayment.Core;
+﻿namespace Core;
 
 // @@TODO: Rename to Transaction?
 public class Payment {

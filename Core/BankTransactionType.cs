@@ -1,4 +1,4 @@
-namespace FastPayment.Core;
+namespace Core;
 
 public enum BankTransactionType {
   AtmWithdrawal,                // Wypłata z bankomatu

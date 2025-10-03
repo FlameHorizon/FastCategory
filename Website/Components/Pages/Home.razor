@@ -1,7 +1,7 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
-@using FastPayment.Core
+@using Core
 @using System.Runtime.CompilerServices
 @using System.Runtime.InteropServices
 @using System.Threading.Tasks
@@ -67,7 +67,7 @@
         <MudSelect 
           @bind-Value="_model.TransactionType" 
           Label="Transaction type" >
-          @foreach (var opt in _options)
+          @foreach (var opt in _transactionTypes)
           {
             <MudSelectItem Value="opt">@opt</MudSelectItem>
           }
@@ -204,17 +204,11 @@
 </script>
 
 @code {
+  // Page related fields.
   private MudAutocomplete<string>? _payeeRef;
   private MudNumericField<decimal>? _totalAmountRef;
 
-  private Queue<BankTransaction> _bankTransactions = [];
-
-  // @@TODO: Allow user to upload bank statement and parse it to pre-fill the form.
-  // Once user presses Save, the transaction will be added to the list of payments
-  // and next transaction from the statement will be pre-filled in the form.
-
   // Control dark mode based on system preference.
-  // @@TODO: Try to do something about 'flashbang' when the page is loaded.
   private bool _isDarkMode = true;
   private MudThemeProvider? _mudThemeProvider;
 
@@ -223,28 +217,25 @@
   // Model for the form.
   private TransactionForm _model = new()
   {
-    Categories = [new() { Name = "", Amount = 0 }]
+    Categories = [new CategoryAmount() { Name = "", Amount = 0 }]
   };
 
   // In-memory storage for payments.
   // These payments might be used to export to a file later.
   private readonly List<Payment> _payments = new();
 
-  private static Home? _instance;
-
-  private IEnumerable<string> _options = [
+  private IEnumerable<string> _transactionTypes = [
     "Deposit",
     "Withdrawl",
     "Transfer"
   ];
-
-  private string[] _searchSpace = [];
-
-  private string[] _recievers = [];
-
-
-  // Field initiazed in the OnInitialized method.
+  
+  private string[] _searchSpaceCategory = [];
+  private string[] _searchSpaceRecievers = [];
+  private Queue<BankTransaction> _bankTransactions = [];
   private CategorySearchEngine _categorySearchEngine;
+
+  private static Home? _instance;
 
 #pragma warning disable CS8618
 // Non-nullable field '_categorySearchEngine' must contain a non-null value when exiting constructor. 
@@ -259,9 +250,9 @@
 
   protected override void OnInitialized()
   {
-    _searchSpace = AppSettingsOptions.Value.TransactionCategories.ToArray();
-    _recievers = AppSettingsOptions.Value.Recievers.ToArray();
-    _categorySearchEngine = new CategorySearchEngine(_searchSpace);
+    _searchSpaceCategory = AppSettingsOptions.Value.TransactionCategories.ToArray();
+    _searchSpaceRecievers = AppSettingsOptions.Value.Recievers.ToArray();
+    _categorySearchEngine = new CategorySearchEngine(_searchSpaceCategory);
     Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
   }
 
@@ -280,12 +271,12 @@
   }
 
   private async Task<IEnumerable<string>> SearchCategory(
-  string phrase,
-  CancellationToken token)
+    string phrase,
+    CancellationToken token)
   {
     if (string.IsNullOrEmpty(phrase))
     {
-      return _searchSpace;
+      return _searchSpaceCategory;
     }
 
     IEnumerable<string> result = _categorySearchEngine.Search(phrase, StringComparison.OrdinalIgnoreCase);
@@ -356,12 +347,12 @@
     // Convert TransactionModel to Payment entity.
     var result = new Payment
     (
-    date: _model.Date!.Value,
-    transactionType: transactionType,
-    totalAmount: _model.TotalAmount,
-    payee: _model.Payee,
-    categories: categories,
-    notes: ""
+      date: _model.Date!.Value,
+      transactionType: transactionType,
+      totalAmount: _model.TotalAmount,
+      payee: _model.Payee,
+      categories: categories,
+      notes: ""
     );
 
     _payments.Add(result);
@@ -421,6 +412,11 @@
     }
   }
 
+  /// <summary>
+  /// Adds a new row with category name and amount assigned to it for user entry.
+  /// If there is unallocated sum of money, new category will auto-fill with 
+  /// the difference.
+  /// </summary>
   private void AddCategory()
   {
     // Drop focus from any input to avoid issues with MudBlazor components.
@@ -471,10 +467,10 @@
   {
     if (string.IsNullOrEmpty(phrase))
     {
-      return _recievers;
+      return _searchSpaceRecievers;
     }
 
-    IEnumerable<string> result = _recievers
+    IEnumerable<string> result = _searchSpaceRecievers
       .Where(x => x.StartsWith(phrase, StringComparison.OrdinalIgnoreCase));
 
     return await Task.FromResult(result);

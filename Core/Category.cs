@@ -1,4 +1,4 @@
-namespace FastPayment.Core;
+namespace Core;
 
 public record Category(
     string Name,

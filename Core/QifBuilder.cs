@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace FastPayment.Core;
+namespace Core;
 
 public class QifBuilder {
   private const string _header =
