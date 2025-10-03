@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace FastPayment.Core;
+namespace Core;
 
 public class CategorySearchEngine {
   private readonly IEnumerable<string> _searchSpace;

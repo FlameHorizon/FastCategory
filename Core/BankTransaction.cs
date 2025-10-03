@@ -1,4 +1,4 @@
-namespace FastPayment.Core;
+namespace Core;
 
 public class BankTransaction {
   public DateTime OperationDate { get; set; }

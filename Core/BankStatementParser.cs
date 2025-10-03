@@ -1,6 +1,4 @@
-using System.Collections.Immutable;
-
-namespace FastPayment.Core;
+using Core;
 
 public static class BankStatementParser {
   public static IEnumerable<BankTransaction> Parse(string[] lines, bool skipHeader) {
