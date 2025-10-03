@@ -132,6 +132,13 @@
               Split
           </MudButton>
 
+          <MudTextField 
+            @bind-Value="_model.Notes" 
+            Label="Notes" 
+            Variant="Variant.Outlined" 
+            Adornment="Adornment.Start" 
+            AdornmentColor="Color.Info"/>
+
         </div>
 
         <div class="d-flex flex-row-reverse">
@@ -155,6 +162,7 @@
           </MudButton>
       </div>
 
+
     </MudPaper>
   </MudItem>
 
@@ -176,6 +184,8 @@
   </MudItem>
 </div>
 
+
+
 <MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode"/>
 <MudPopoverProvider />
 
@@ -194,322 +204,322 @@
 </script>
 
 @code {
-  private MudAutocomplete<string> _categoriesRef;
-  private MudAutocomplete<string> _payeeRef;
-  private MudNumericField<decimal> _totalAmountRef;
+    private MudAutocomplete<string> _categoriesRef;
+    private MudAutocomplete<string> _payeeRef;
+    private MudNumericField<decimal> _totalAmountRef;
 
-  private Queue<BankTransaction> _bankTransactions;
+    private Queue<BankTransaction> _bankTransactions;
 
-  // @@TODO: Allow user to upload bank statement and parse it to pre-fill the form.
-  // Once user presses Save, the transaction will be added to the list of payments
-  // and next transaction from the statement will be pre-filled in the form.
+    // @@TODO: Allow user to upload bank statement and parse it to pre-fill the form.
+    // Once user presses Save, the transaction will be added to the list of payments
+    // and next transaction from the statement will be pre-filled in the form.
 
-  // Control dark mode based on system preference.
-  // @@TODO: Try to do something about 'flashbang' when the page is loaded.
-  private bool _isDarkMode = true;
-  private MudThemeProvider? _mudThemeProvider;
-  
-  private CultureInfo _culture = CultureInfo.CreateSpecificCulture("pl");
+    // Control dark mode based on system preference.
+    // @@TODO: Try to do something about 'flashbang' when the page is loaded.
+    private bool _isDarkMode = true;
+    private MudThemeProvider? _mudThemeProvider;
 
-  // Model for the form.
-  private TransactionForm _model = new()
+    private CultureInfo _culture = CultureInfo.CreateSpecificCulture("pl");
+
+    // Model for the form.
+    private TransactionForm _model = new()
   {
     Categories = [new() { Name = "", Amount = 0 }]
   };
 
-  // In-memory storage for payments.
-  // These payments might be used to export to a file later.
-  private readonly List<Payment> _payments = new();
+    // In-memory storage for payments.
+    // These payments might be used to export to a file later.
+    private readonly List<Payment> _payments = new();
 
-  private static Home? _instance;
+    private static Home? _instance;
 
-  private IEnumerable<string> _options = [
-    "Deposit",
+    private IEnumerable<string> _options = [
+      "Deposit",
     "Withdrawl",
     "Transfer"
-  ];
+    ];
 
-  private string[] _searchSpace = [];
+    private string[] _searchSpace = [];
 
-  private string[] _recievers = [];
+    private string[] _recievers = [];
 
-  private CategorySearchEngine _categorySearchEngine;
+    private CategorySearchEngine _categorySearchEngine;
 
-  public Home()
-  {
-    _instance = this;
-  }
-
-  protected override void OnInitialized()
-  {
-    _searchSpace = AppSettingsOptions.Value.TransactionCategories.ToArray();
-    _recievers = AppSettingsOptions.Value.Recievers.ToArray();
-    _categorySearchEngine = new CategorySearchEngine(_searchSpace);
-    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-  }
-
-  protected async override Task OnAfterRenderAsync(bool firstRender)
-  {
-    if (firstRender)
+    public Home()
     {
-      _isDarkMode = await _mudThemeProvider.GetSystemDarkModeAsync();
-      await JSRuntime.InvokeVoidAsync("JsFunctions.addKeyboardListenerEvent");
-      StateHasChanged();
-    }
-  }
-
-  private async Task<IEnumerable<string>> SearchCategory(
-    string phrase,
-    CancellationToken token)
-  {
-    if (string.IsNullOrEmpty(phrase))
-    {
-      return _searchSpace;
+        _instance = this;
     }
 
-    IEnumerable<string> result = _categorySearchEngine.Search(phrase, StringComparison.OrdinalIgnoreCase);
-    return result;
-  }
-
-  /// <summary>
-  /// Handle key presses when the date input is focused.
-  /// </summary>
-  /// <param name="args">Information about which key was pressed.</param>
-  private void OnKeyDownDate(KeyboardEventArgs args)
-  {
-    if (_model.Date == null)
+    protected override void OnInitialized()
     {
-      _model.Date = DateTime.Today;
-      return;
+        _searchSpace = AppSettingsOptions.Value.TransactionCategories.ToArray();
+        _recievers = AppSettingsOptions.Value.Recievers.ToArray();
+        _categorySearchEngine = new CategorySearchEngine(_searchSpace);
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     }
 
-    if (args.CtrlKey)
+    protected async override Task OnAfterRenderAsync(bool firstRender)
     {
-      return;
+        if (firstRender)
+        {
+            _isDarkMode = await _mudThemeProvider.GetSystemDarkModeAsync();
+            await JSRuntime.InvokeVoidAsync("JsFunctions.addKeyboardListenerEvent");
+            StateHasChanged();
+        }
     }
 
-    if (args.Key == "=")
+    private async Task<IEnumerable<string>> SearchCategory(
+      string phrase,
+      CancellationToken token)
     {
-      _model.Date = _model.Date.Value.AddDays(1);
-    }
-    else if (args.Key == "-")
-    {
-      _model.Date = _model.Date.Value.AddDays(-1);
-    }
-  }
+        if (string.IsNullOrEmpty(phrase))
+        {
+            return _searchSpace;
+        }
 
-  private async Task OnValidSubmit()
-  {
-    // @@NOTE: Right now, I'm assuming the form is always valid.
-    // In a real application, you would check the validation state.
-    var transactionType = _model.TransactionType switch
-    {
-      "Deposit" => MMEXTransactionTypes.Deposit,
-      "Withdrawl" => MMEXTransactionTypes.Widthdrawl,
-      "Transfer" => MMEXTransactionTypes.Transfer,
-      _ => MMEXTransactionTypes.Unknown
-    };
-
-    var categories = new List<Category>();
-    foreach (var cat in _model.Categories)
-    {
-      string[] split = cat.Name.Split(":");
-      string name = split.First();
-      string subcategory = split.Last();
-      decimal amount = cat.Amount;
-
-      categories.Add(new Category(name, subcategory, amount));
+        IEnumerable<string> result = _categorySearchEngine.Search(phrase, StringComparison.OrdinalIgnoreCase);
+        return result;
     }
 
-    // @@TODO: Implement following things.
-    // ~ 1. Validate that sum of category amounts equals total amount.
-    // 2. Validate that at least one category is provided.
-    // 3. Validate that date is not null.
-    // 4. Validate that transaction type is valid.
-    // 5. Validate that payee is not empty.
-    // 6. Show validation errors to the user.
-    // + 7. Clear the form after successful submission.
-    // 8. Allow users to add notes to the transaction.
-    // + 9. Since all transactions will be stored in memory, implement second section where they will be displayed.
-
-    // Convert TransactionModel to Payment entity.
-    var result = new Payment
-    (
-      date: _model.Date!.Value,
-      transactionType: transactionType,
-      totalAmount: _model.TotalAmount,
-      payee: _model.Payee,
-      categories: categories,
-      notes: ""
-    );
-
-    _payments.Add(result);
-
-    Console.WriteLine("Form is valid");
-
-    // Setup model for the new transaction.
-    _model.Payee = ""; 
-
-    // @@BUG: For some reason, why I use keypress (Alt+S) to save
-    // transaction, payee and category value is not refreshed after StateHasChanged.
-    // I'm doing this manually then.
-    _payeeRef.Value = "";
-    await InvokeAsync(_payeeRef.ForceUpdate);
-
-    // @@BUG: It is really hard to clear category name when Alt+S is pressed.
-    // I've noticed that most of the problems stems from JsKeyDown method.
-    // Everything works just fine when I press buttons on webpage instead
-    // of using keyboard shortcuts.
-
-    _model.Categories.Clear();
-    _model.Categories.Add(new CategoryAmount());
-
-    PrefillFormWithNextTransaction();
-    await InvokeAsync(StateHasChanged);
-  }
-
-  /// <summary>
-  /// Handle key presses from JavaScript.
-  /// </summary>
-  /// <param name="e">Information about which key was pressed.</param>
-  [JSInvokable]
-  public static void JsKeyDown(KeyboardEventArgs e)
-  {
-    if (e.AltKey && e.Key.ToLower() == "a")
+    /// <summary>
+    /// Handle key presses when the date input is focused.
+    /// </summary>
+    /// <param name="args">Information about which key was pressed.</param>
+    private void OnKeyDownDate(KeyboardEventArgs args)
     {
-      if (_instance != null)
-      {
-        _instance.AddCategory();
-      }
+        if (_model.Date == null)
+        {
+            _model.Date = DateTime.Today;
+            return;
+        }
+
+        if (args.CtrlKey)
+        {
+            return;
+        }
+
+        if (args.Key == "=")
+        {
+            _model.Date = _model.Date.Value.AddDays(1);
+        }
+        else if (args.Key == "-")
+        {
+            _model.Date = _model.Date.Value.AddDays(-1);
+        }
     }
 
-    if (e.AltKey && e.Key.ToLower() == "s")
+    private async Task OnValidSubmit()
     {
-      if (_instance != null)
-      {
-        _instance.OnValidSubmit();
-      }
-    }
-  }
+        // @@NOTE: Right now, I'm assuming the form is always valid.
+        // In a real application, you would check the validation state.
+        var transactionType = _model.TransactionType switch
+        {
+            "Deposit" => MMEXTransactionTypes.Deposit,
+            "Withdrawl" => MMEXTransactionTypes.Widthdrawl,
+            "Transfer" => MMEXTransactionTypes.Transfer,
+            _ => MMEXTransactionTypes.Unknown
+        };
 
-  private void AddCategory()
-  {
-    // Drop focus from any input to avoid issues with MudBlazor components.
-    foreach (var cat in _model.Categories)
-    {
-      if (cat.Ref is not null)
-      {
-        cat.Ref.CloseMenuAsync();
-      }
-    }
+        var categories = new List<Category>();
+        foreach (var cat in _model.Categories)
+        {
+            string[] split = cat.Name.Split(":");
+            string name = split.First();
+            string subcategory = split.Last();
+            decimal amount = cat.Amount;
 
-    var newCategory = new CategoryAmount();
-    _model.Categories.Add(newCategory);
+            categories.Add(new Category(name, subcategory, amount));
+        }
 
-    if (_model.Categories.Count >= 2)
-    {
-      decimal sum = _model.Categories.Sum(c => c.Amount);
-      decimal diff = _model.TotalAmount - sum;
+        // @@TODO: Implement following things.
+        // ~ 1. Validate that sum of category amounts equals total amount.
+        // 2. Validate that at least one category is provided.
+        // 3. Validate that date is not null.
+        // 4. Validate that transaction type is valid.
+        // 5. Validate that payee is not empty.
+        // 6. Show validation errors to the user.
+        // + 7. Clear the form after successful submission.
+        // 8. Allow users to add notes to the transaction.
+        // + 9. Since all transactions will be stored in memory, implement second section where they will be displayed.
 
-      if (diff < 0)
-      {
-        diff = 0;
-      }
-      newCategory.Amount = diff;
-    }
+        // Convert TransactionModel to Payment entity.
+        var result = new Payment
+        (
+          date: _model.Date!.Value,
+          transactionType: transactionType,
+          totalAmount: _model.TotalAmount,
+          payee: _model.Payee,
+          categories: categories,
+          notes: ""
+        );
 
-    // First, render element to the DOM so that Ref is not null.
-    // Then, focus the newly added category input.
-    if (newCategory.Ref is not null)
-    {
-      newCategory.Ref.FocusAsync();
-    }
-    InvokeAsync(StateHasChanged);
-  }
+        _payments.Add(result);
 
-  private void RemoveCategory(CategoryAmount category)
-  {
-    if (_model.Categories.Count > 1 && category != null)
-    {
-      _model.Categories.Remove(category);
-      StateHasChanged();
-    }
-  }
+        Console.WriteLine("Form is valid");
 
-  private async Task<IEnumerable<string>> SearchRecievers(
-    string phrase,
-    CancellationToken token)
-  {
-    if (string.IsNullOrEmpty(phrase))
-    {
-      return _recievers;
-    }
+        // Setup model for the new transaction.
+        _model.Payee = ""; 
 
-    IEnumerable<string> result = _recievers
-    .Where(x => x.StartsWith(phrase, StringComparison.OrdinalIgnoreCase));
+        // @@BUG: For some reason, why I use keypress (Alt+S) to save
+        // transaction, payee and category value is not refreshed after StateHasChanged.
+        // I'm doing this manually then.
+        _payeeRef.Value = "";
+        await InvokeAsync(_payeeRef.ForceUpdate);
 
-    return result;
-  }
+        // @@BUG: It is really hard to clear category name when Alt+S is pressed.
+        // I've noticed that most of the problems stems from JsKeyDown method.
+        // Everything works just fine when I press buttons on webpage instead
+        // of using keyboard shortcuts.
 
-  /// <summary>
-  /// Update total amount and adjust the first category amount if there is only one category.
-  /// </summary>
-  /// <param name="value">New value of TotalAmount</param>
-  private void UpdateTotalAmount(decimal value)
-  {
-    _model.TotalAmount = value;
+        _model.Categories.Clear();
+        _model.Categories.Add(new CategoryAmount());
 
-    if (_model.Categories.Count == 1)
-    {
-      _model.Categories.ElementAt(0).Amount = value;
-    }
-  }
-
-  /// <summary>
-  /// Export all saved transactions into QIF format.
-  /// </summary>
-  private async Task ExportToDisc()
-  {
-    var builder = new QifBuilder();
-    foreach (var payment in _payments)
-    {
-      builder = builder.AddTransaction(payment);
+        PrefillFormWithNextTransaction();
+        await InvokeAsync(StateHasChanged);
     }
 
-    string qifContent = builder.Build();
-    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(qifContent);
-    var s = new MemoryStream(bytes);
+    /// <summary>
+    /// Handle key presses from JavaScript.
+    /// </summary>
+    /// <param name="e">Information about which key was pressed.</param>
+    [JSInvokable]
+    public static void JsKeyDown(KeyboardEventArgs e)
+    {
+        if (e.AltKey && e.Key.ToLower() == "a")
+        {
+            if (_instance != null)
+            {
+                _instance.AddCategory();
+            }
+        }
 
-    var fileName = $"transactions-{DateTime.Now:yyyyMMddHHmmss}.qif";
-    using var streamRef = new DotNetStreamReference(stream: s);
-    await JSRuntime.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-  }
+        if (e.AltKey && e.Key.ToLower() == "s")
+        {
+            if (_instance != null)
+            {
+                _instance.OnValidSubmit();
+            }
+        }
+    }
 
-  private async Task UploadBankStatement(IBrowserFile file)
-  {
-    // @@TODO: Allow user (for now) only to upload csv files.
+    private void AddCategory()
+    {
+        // Drop focus from any input to avoid issues with MudBlazor components.
+        foreach (var cat in _model.Categories)
+        {
+            if (cat.Ref is not null)
+            {
+                cat.Ref.CloseMenuAsync();
+            }
+        }
 
-    // @@NOTE: Uploading bank statement for the second time
-    // will override previous value.
+        var newCategory = new CategoryAmount();
+        _model.Categories.Add(newCategory);
 
-    // Since I know that my statement will contains Polish symbols like ą, ć, ę, ł and others
-    // correct codepage has to be loaded.
-    using StreamReader sr = new StreamReader(file.OpenReadStream(), Encoding.GetEncoding(1250));
-    string content = await sr.ReadToEndAsync();
-    string[] allLines = content.Split(Environment.NewLine, StringSplitOptions.None);
+        if (_model.Categories.Count >= 2)
+        {
+            decimal sum = _model.Categories.Sum(c => c.Amount);
+            decimal diff = _model.TotalAmount - sum;
 
-    // Transactions will be displayed in order of the oldest to newest.
-    // This is how I typically fill my budget.
-    IEnumerable<BankTransaction> transactions = BankStatementParser.Parse(allLines, skipHeader:true)
-      .OrderBy(x => x.CurrencyDate);
+            if (diff < 0)
+            {
+                diff = 0;
+            }
+            newCategory.Amount = diff;
+        }
 
-    _bankTransactions = new Queue<BankTransaction>(transactions);
+        // First, render element to the DOM so that Ref is not null.
+        // Then, focus the newly added category input.
+        if (newCategory.Ref is not null)
+        {
+            newCategory.Ref.FocusAsync();
+        }
+        InvokeAsync(StateHasChanged);
+    }
 
-    PrefillFormWithNextTransaction();
-  }
+    private void RemoveCategory(CategoryAmount category)
+    {
+        if (_model.Categories.Count > 1 && category != null)
+        {
+            _model.Categories.Remove(category);
+            StateHasChanged();
+        }
+    }
 
-  private void PrefillFormWithNextTransaction()
-  {
+    private async Task<IEnumerable<string>> SearchRecievers(
+      string phrase,
+      CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(phrase))
+        {
+            return _recievers;
+        }
+
+        IEnumerable<string> result = _recievers
+        .Where(x => x.StartsWith(phrase, StringComparison.OrdinalIgnoreCase));
+
+        return result;
+    }
+
+    /// <summary>
+    /// Update total amount and adjust the first category amount if there is only one category.
+    /// </summary>
+    /// <param name="value">New value of TotalAmount</param>
+    private void UpdateTotalAmount(decimal value)
+    {
+        _model.TotalAmount = value;
+
+        if (_model.Categories.Count == 1)
+        {
+            _model.Categories.ElementAt(0).Amount = value;
+        }
+    }
+
+    /// <summary>
+    /// Export all saved transactions into QIF format.
+    /// </summary>
+    private async Task ExportToDisc()
+    {
+        var builder = new QifBuilder();
+        foreach (var payment in _payments)
+        {
+            builder = builder.AddTransaction(payment);
+        }
+
+        string qifContent = builder.Build();
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(qifContent);
+        var s = new MemoryStream(bytes);
+
+        var fileName = $"transactions-{DateTime.Now:yyyyMMddHHmmss}.qif";
+        using var streamRef = new DotNetStreamReference(stream: s);
+        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+    }
+
+    private async Task UploadBankStatement(IBrowserFile file)
+    {
+        // @@TODO: Allow user (for now) only to upload csv files.
+
+        // @@NOTE: Uploading bank statement for the second time
+        // will override previous value.
+
+        // Since I know that my statement will contains Polish symbols like ą, ć, ę, ł and others
+        // correct codepage has to be loaded.
+        using StreamReader sr = new StreamReader(file.OpenReadStream(), Encoding.GetEncoding(1250));
+        string content = await sr.ReadToEndAsync();
+        string[] allLines = content.Split(Environment.NewLine, StringSplitOptions.None);
+
+        // Transactions will be displayed in order of the oldest to newest.
+        // This is how I typically fill my budget.
+        IEnumerable<BankTransaction> transactions = BankStatementParser.Parse(allLines, skipHeader:true)
+          .OrderBy(x => x.CurrencyDate);
+
+        _bankTransactions = new Queue<BankTransaction>(transactions);
+
+        PrefillFormWithNextTransaction();
+    }
+
+    private async Task PrefillFormWithNextTransaction()
+    {
     if (_bankTransactions != null && _bankTransactions.Count > 0)
     {
       var next = _bankTransactions.Dequeue();
@@ -532,9 +542,20 @@
       // and amount for the first category.
       UpdateTotalAmount(_model.TotalAmount);
 
-      // Since date and transaction type are already filled, focus on Payee field.
-      _payeeRef.FocusAsync();
-    }
+      // @@TODO: Add more information for each transaction.
+      var sb = new StringBuilder();
+      if (next.TransactionType == BankTransactionType.CardPayment)
+      {
+        sb.AppendLine($"Adres: {next.GetAddress()}"); 
+      }
 
+      _model.Notes = sb.ToString();
+
+      // Since date and transaction type are already filled, focus on Payee field.
+      // I'm focusing and closing menu to put just cursor on the field.
+      // I don't need to see suggestions immiedietly.
+      await _payeeRef.FocusAsync();
+      await _payeeRef.CloseMenuAsync();
+    }
   }
 }
