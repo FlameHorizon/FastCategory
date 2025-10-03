@@ -1,4 +1,5 @@
 using MudBlazor.Services;
+
 using Website.Components;
 
 var builder = WebApplication.CreateBuilder(args);
