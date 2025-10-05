@@ -13,6 +13,12 @@
 @using System.ComponentModel.DataAnnotations
 @inject ISnackbar Snackbar
 
+@*
+  @@TODO: Replace call to ForceRender(true) with ForceUpdate() as more direct
+  method to refresh data displayed by component and to avoid redrawing
+  entire component.
+*@
+
 @* 
   @@BUG: There is a bug in the application which prevents adding new split categories
   or saving them using keyboard shortcuts when more than one tab open in the browser
@@ -135,6 +141,8 @@
 
           <MudTextField 
             @bind-Value="_model.Notes" 
+            @ref="_notesRef"
+            Lines="3"
             Label="Notes" 
             Variant="Variant.Outlined" 
             Adornment="Adornment.Start" 
@@ -209,6 +217,7 @@
   // Page related fields.
   private MudAutocomplete<string>? _payeeRef;
   private MudNumericField<decimal>? _totalAmountRef;
+  private MudTextField<string> _notesRef;
 
   // Control dark mode based on system preference.
   private bool _isDarkMode = true;
@@ -591,12 +600,24 @@
 
       // @@TODO: Add more information for each transaction.
       var sb = new StringBuilder();
-      if (next.TransactionType == BankTransactionType.CardPayment)
+      if (next.TransactionType == BankTransactionType.CardPayment
+        || next.TransactionType == BankTransactionType.MobileWebPayment)
       {
         sb.AppendLine($"Adres: {next.GetAddress()}");
       }
+      else if (next.TransactionType == BankTransactionType.OutgoingAccountTransfer)
+      {
+        sb.AppendLine($"Nazwa odbiorcy: {next.GetRecieverName()}");
+      }
 
       _model.Notes = sb.ToString();
+#pragma warning disable BL0005
+// Component parameter should not be set outside of its component
+// Justification: When saving transaction via Alt+S value of last payee is not rendered.
+      _notesRef.Value = _model.Notes;
+#pragma warning restore BL0005
+
+      await _notesRef.ForceUpdate();
 
       // Since date and transaction type are already filled, focus on Payee field.
       // I'm focusing and closing menu to put just cursor on the field.
