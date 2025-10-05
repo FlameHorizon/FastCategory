@@ -17,6 +17,19 @@
   @@TODO: Replace call to ForceRender(true) with ForceUpdate() as more direct
   method to refresh data displayed by component and to avoid redrawing
   entire component.
+
+  @@TODO: Handle a case where just main category is selected.
+  Right now this cases auto insert sub category with the same name.
+  Example
+  - User selects 'Brak kategorii'
+  - In qif file it will be visible as 'Brak kategorii:Brak kategorii'.
+  - It should be just 'Brak kategorii'.
+
+  @@TODO: Notes gathered from bank statement, visible on page should be
+  also transffered to qif.
+
+  @@TODO: Add support for transfers. When transfer is detected instead of
+  show text "Payee", show text "Transfer to" and show list of known banking accounts.
 *@
 
 @* 
@@ -174,24 +187,32 @@
 
     </MudPaper>
   </MudItem>
-
-  <MudItem xs="12" sm="6" md="6">
-    <MudPaper Class="pa-4">
-      <h3>Payments</h3>
-      <p>List of payments will be shown here.</p>
-
-      @foreach(var p in _payments)
-      {
-        <div class="mb-2 pa-2" style="border: 1px solid lightgray; border-radius: 8px;">
-          <div><b>Date:</b> @p.Date.ToString("yyyy-MM-dd")</div>
-          <div><b>Type:</b> @p.TransactionType</div>
-          <div><b>Payee:</b> @p.Payee</div>
-          <div><b>Total Amount:</b> @p.TotalAmount.ToString("C", CultureInfo.CreateSpecificCulture("pl"))</div>
-        </div>
-      }
-    </MudPaper>
-  </MudItem>
 </div>
+
+<MudSimpleTable Class="mt-4">
+
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Payee</th>
+      <th>Total Amount</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    @foreach(var p in _payments)
+    {
+      <tr>
+        <td>@p.Date.ToString("yyyy-MM-dd")</td>
+        <td>@p.TransactionType</td>
+        <td>@p.Payee</td>
+        <td>@p.TotalAmount.ToString("C", CultureInfo.CreateSpecificCulture("pl"))</td>
+      </tr>
+    }
+  </tbody>
+
+</MudSimpleTable>
 
 <MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode"/>
 <MudPopoverProvider />
