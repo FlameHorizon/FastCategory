@@ -605,9 +605,11 @@
       {
         sb.AppendLine($"Adres: {next.GetAddress()}");
       }
-      else if (next.TransactionType == BankTransactionType.OutgoingAccountTransfer)
+      else if (next.TransactionType == BankTransactionType.OutgoingAccountTransfer
+        || next.TransactionType == BankTransactionType.StandingOrder)
       {
         sb.AppendLine($"Nazwa odbiorcy: {next.GetRecieverName()}");
+        sb.AppendLine($"Tytul: {next.GetTitle()}");
       }
 
       _model.Notes = sb.ToString();
