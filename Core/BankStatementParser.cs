@@ -9,7 +9,7 @@ public static class BankStatementParser {
 
     foreach ((Index index, string line) in data.Index()) {
       string[] split = line.Split("\",\"", StringSplitOptions.TrimEntries);
-      if (split.Length != 13) {
+      if (split.Length < 11 || split.Length > 13) {
         Console.WriteLine(
             $"Line on row {index.Value} should have 13 columns but have {split.Length}");
         continue;
