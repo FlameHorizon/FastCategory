@@ -84,7 +84,13 @@ D[PLN]
 
     if (payment.Categories != null) {
       foreach (var cat in payment.Categories) {
-        WithSplit(cat.Name + ":" + cat.Subcategory);
+        // Some payments will not have subcategory.
+        if (string.IsNullOrEmpty(cat.Subcategory)) {
+          WithSplit(cat.Name);
+        }
+        else {
+          WithSplit(cat.Name + ":" + cat.Subcategory);
+        }
 
         if (payment.TransactionType == MMEXTransactionTypes.Widthdrawl) {
           WithSplitAmountCost(cat.Amount);

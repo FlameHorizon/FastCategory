@@ -18,13 +18,6 @@
   method to refresh data displayed by component and to avoid redrawing
   entire component.
 
-  @@TODO: Handle a case where just main category is selected.
-  Right now this cases auto insert sub category with the same name.
-  Example
-  - User selects 'Brak kategorii'
-  - In qif file it will be visible as 'Brak kategorii:Brak kategorii'.
-  - It should be just 'Brak kategorii'.
-
   @@TODO: Notes gathered from bank statement, visible on page should be
   also transffered to qif.
 
@@ -371,7 +364,10 @@
     {
       string[] split = cat.Name.Split(":");
       string name = split.First();
-      string subcategory = split.Last();
+
+      // Some transactions will not have subcategory available.
+      // In those cases, don't provide any.
+      string subcategory = split.Length == 1 ? "" : split.Last();
       decimal amount = cat.Amount;
 
       categories.Add(new Category(name, subcategory, amount));
