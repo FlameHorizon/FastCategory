@@ -11,6 +11,7 @@
 @using Website.Models
 @using MudBlazor.Extensions
 @using System.ComponentModel.DataAnnotations
+@inject ISnackbar Snackbar
 
 @* 
   @@BUG: There is a bug in the application which prevents adding new split categories
@@ -184,10 +185,11 @@
   </MudItem>
 </div>
 
-
-
 <MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode"/>
 <MudPopoverProvider />
+
+@* Needed for snackbars *@
+<MudSnackbarProvider />
 
 <script>
   window.downloadFileFromStream = async (fileName, contentStreamReference) => {
@@ -345,15 +347,37 @@
     // + 9. Since all transactions will be stored in memory, implement second section where they will be displayed.
 
     // Convert TransactionModel to Payment entity.
-    var result = new Payment
-    (
-      date: _model.Date!.Value,
-      transactionType: transactionType,
-      totalAmount: _model.TotalAmount,
-      payee: _model.Payee,
-      categories: categories,
-      notes: ""
-    );
+
+    // Since this can throw, make sure user gets information about it
+    // and do not crash entire site.
+
+    Payment? result = null;
+    try {
+      result = new Payment
+      (
+        date: _model.Date!.Value,
+        transactionType: transactionType,
+        totalAmount: _model.TotalAmount,
+        payee: _model.Payee,
+        categories: categories,
+        notes: ""
+      );
+    } catch (ArgumentException)
+    {
+      // Show toast message about the problem and do not add transaction
+      // to the list.
+      Snackbar.Add(
+        "Sum of all categories is not equal to total amount.",
+        Severity.Warning);
+      return;
+    }
+
+    // If for whatever reason result is null, throw.
+    if (result is null)
+    {
+      throw new InvalidOperationException(
+        $"Expected to have non-null value for '{nameof(result)}'");
+    }
 
     _payments.Add(result);
 
@@ -385,6 +409,7 @@
     _model.Categories.Add(new CategoryAmount());
 
     await PrefillFormWithNextTransaction();
+    Snackbar.Add("Transaction created successfuly.", Severity.Success);
     await InvokeAsync(StateHasChanged);
   }
 
