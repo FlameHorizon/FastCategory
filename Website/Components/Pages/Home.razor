@@ -19,7 +19,7 @@
   entire component.
 
   @@TODO: Notes gathered from bank statement, visible on page should be
-  also transffered to qif.
+  also transffered to qif. First, figure out how MMEX knows if field is note field.
 
   @@TODO: Add support for transfers. When transfer is detected instead of
   show text "Payee", show text "Transfer to" and show list of known banking accounts.
@@ -101,7 +101,8 @@
         @* 
            When the user types something that is not on the list and CoerceValue is true, 
            the Value will be overwritten with the user input which allows it to be 
-           passed to the validation function.
+           passed to the validation function. That way, user is NOT forced to provide
+           values which exists only on the list.
          *@
 
         <MudAutocomplete
@@ -627,7 +628,6 @@
       // and amount for the first category.
       UpdateTotalAmount(_model.TotalAmount);
 
-      // @@TODO: Add more information for each transaction.
       var sb = new StringBuilder();
       if (next.TransactionType == BankTransactionType.CardPayment
         || next.TransactionType == BankTransactionType.MobileWebPayment)
