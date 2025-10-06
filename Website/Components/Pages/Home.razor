@@ -14,9 +14,6 @@
 @inject ISnackbar Snackbar
 
 @*
-  @@TODO: Notes gathered from bank statement, visible on page should be
-  also transffered to qif. First, figure out how MMEX knows if field is note field.
-
   @@TODO: Add support for transfers. When transfer is detected instead of
   show text "Payee", show text "Transfer to" and show list of known banking accounts.
 *@
@@ -395,7 +392,7 @@
         totalAmount: _model.TotalAmount,
         payee: _model.Payee,
         categories: categories,
-        notes: ""
+        notes: _model.Notes
       );
     } catch (ArgumentException)
     {

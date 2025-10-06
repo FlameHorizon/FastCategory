@@ -65,6 +65,20 @@ D[PLN]
     return this;
   }
 
+
+  /// <summary>
+  /// Add notes to the transaction. Supports multiline notes.
+  /// </summary>
+  /// <param name="text"></param>
+  /// <returns>New instance of <c>QifBuilder</c> with note.</returns>
+  public QifBuilder WithNote(string text) {
+    string[] split = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+    foreach (var value in split) {
+      _sb.AppendLine("N" + value);
+    }
+    return this;
+  }
+
   public QifBuilder AddTransaction(Payment payment) {
     StartTransaction();
     WithDate(payment.Date);
@@ -100,6 +114,8 @@ D[PLN]
         }
       }
     }
+
+    WithNote(payment.Notes);
 
     EndTransaction();
     return this;

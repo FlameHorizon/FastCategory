@@ -185,6 +185,7 @@ D[PLN]
       .WithSplitAmountCost(129.55m)
       .WithSplit("Jedzenie:Inne")
       .WithSplitAmountCost(1.00m)
+      .WithNote("Soczki")
       .EndTransaction()
       .Build();
 
@@ -197,6 +198,7 @@ D[PLN]
     Assert.Contains("$-129.55", actual);
     Assert.Contains("SJedzenie:Inne", actual);
     Assert.Contains("$-1.00", actual);
+    Assert.Contains("NSoczki", actual);
     Assert.EndsWith("^", actual);
   }
 
@@ -218,6 +220,19 @@ D[PLN]
     Assert.Contains("PBank", actual);
     Assert.Contains("SWynagrodzenie:Praca", actual);
     Assert.Contains("$100.00", actual);
+  }
+
+  [Fact]
+  public void QifBuilder_Builds_NotesWithMultiline() {
+    var builder = new QifBuilder();
+    string actual = builder
+      .StartTransaction()
+      .WithNote("Soczki" + Environment.NewLine + "Ziemniak")
+      .EndTransaction()
+      .Build();
+
+    Assert.Contains("NSoczki", actual);
+    Assert.Contains("NZiemniak", actual);
   }
 
   [Fact]
