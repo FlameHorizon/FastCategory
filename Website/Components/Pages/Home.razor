@@ -14,10 +14,6 @@
 @inject ISnackbar Snackbar
 
 @*
-  @@TODO: Replace call to ForceRender(true) with ForceUpdate() as more direct
-  method to refresh data displayed by component and to avoid redrawing
-  entire component.
-
   @@TODO: Notes gathered from bank statement, visible on page should be
   also transffered to qif. First, figure out how MMEX knows if field is note field.
 
@@ -621,7 +617,7 @@
 // Justification: When saving transaction via Alt+S value of last payee is not rendered.
         _totalAmountRef.Value = Math.Abs(next.Amount);
 #pragma warning restore BL0005
-        _totalAmountRef.ForceRender(true);
+        await _totalAmountRef.ForceUpdate();
       }
 
       // This method call updates total amount (which is already set manually)
