@@ -83,7 +83,9 @@
           autofocus/>
 
         <MudSelect 
-          @bind-Value="_model.TransactionType" 
+          T="string"
+          @ref="_transactionTypeRef"
+          ValueChanged="@(v => UpdateTransactionType(v))"
           Label="Transaction type" >
           @foreach (var opt in _transactionTypes)
           {
@@ -99,11 +101,11 @@
          *@
 
         <MudAutocomplete
-          @bind-Value="_model.Payee"
-          @ref="_payeeRef"
-          Label="Payee"
+          @bind-Value="_model.Receiver"
+          @ref="_receiverRef"
+          Label="Receiver/Sender"
           CoerceValue="true"
-          SearchFunc="SearchRecievers">
+          SearchFunc="SearchReceivers">
         </MudAutocomplete>
 
         <MudNumericField
@@ -194,7 +196,7 @@
     <tr>
       <th>Date</th>
       <th>Type</th>
-      <th>Payee</th>
+      <th>Receiver</th>
       <th>Total Amount</th>
     </tr>
   </thead>
@@ -235,9 +237,10 @@
 
 @code {
   // Page related fields.
-  private MudAutocomplete<string>? _payeeRef;
+  private MudAutocomplete<string>? _receiverRef;
   private MudNumericField<decimal>? _totalAmountRef;
   private MudTextField<string> _notesRef;
+  private MudSelect<string> _transactionTypeRef;
 
   // Control dark mode based on system preference.
   private bool _isDarkMode = true;
@@ -262,9 +265,11 @@
   ];
   
   private string[] _searchSpaceCategory = [];
-  private string[] _searchSpaceRecievers = [];
+  private string[] _searchSpaceReceivers = [];
   private Queue<BankTransaction> _bankTransactions = [];
   private CategorySearchEngine _categorySearchEngine;
+  private string[] _knownPayees = [];
+  private string[] _knownAccounts = [];
 
   private static Home? _instance;
 
@@ -282,9 +287,12 @@
   protected override void OnInitialized()
   {
     _searchSpaceCategory = AppSettingsOptions.Value.TransactionCategories.ToArray();
-    _searchSpaceRecievers = AppSettingsOptions.Value.Recievers.ToArray();
+    _knownPayees = AppSettingsOptions.Value.Recievers.ToArray();
+    _knownAccounts = AppSettingsOptions.Value.Accounts.ToArray();
     _categorySearchEngine = new CategorySearchEngine(_searchSpaceCategory);
     Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+    _searchSpaceReceivers = _knownPayees; 
   }
 
   protected async override Task OnAfterRenderAsync(bool firstRender)
@@ -390,7 +398,7 @@
         date: _model.Date!.Value,
         transactionType: transactionType,
         totalAmount: _model.TotalAmount,
-        payee: _model.Payee,
+        payee: _model.Receiver,
         categories: categories,
         notes: _model.Notes
       );
@@ -416,7 +424,7 @@
     Console.WriteLine("Form is valid");
 
     // Setup model for the new transaction.
-    _model.Payee = "";
+    _model.Receiver = "";
 
     // @@BUG: It is really hard to clear category name when Alt+S is pressed.
     // I've noticed that most of the problems stems from JsKeyDown method.
@@ -426,15 +434,15 @@
     // @@BUG: For some reason, why I use keypress (Alt+S) to save
     // transaction, payee and category value is not refreshed after StateHasChanged.
     // I'm doing this manually then.
-    if (_payeeRef is not null)
+    if (_receiverRef is not null)
     {
 #pragma warning disable BL0005
 // Component parameter should not be set outside of its component
 // Justification: When saving transaction via Alt+S value of last payee is not rendered.
-      _payeeRef.Value = "";
+      _receiverRef.Value = "";
 #pragma warning restore BL0005
 
-      await InvokeAsync(_payeeRef.ForceUpdate);
+      await InvokeAsync(_receiverRef.ForceUpdate);
     }
 
     _model.Categories.Clear();
@@ -518,16 +526,16 @@
     }
   }
 
-  private async Task<IEnumerable<string>> SearchRecievers(
+  private async Task<IEnumerable<string>> SearchReceivers(
     string phrase,
     CancellationToken token)
   {
     if (string.IsNullOrEmpty(phrase))
     {
-      return _searchSpaceRecievers;
+      return _searchSpaceReceivers;
     }
 
-    IEnumerable<string> result = _searchSpaceRecievers
+    IEnumerable<string> result = _searchSpaceReceivers
       .Where(x => x.StartsWith(phrase, StringComparison.OrdinalIgnoreCase));
 
     return await Task.FromResult(result);
@@ -552,7 +560,7 @@
   /// </summary>
   private async Task ExportToDisc()
   {
-    var builder = new QifBuilder();
+    var builder = new QifBuilder("Wspólne");
     foreach (var payment in _payments)
     {
       builder = builder.AddTransaction(payment);
@@ -646,11 +654,36 @@
       // Since date and transaction type are already filled, focus on Payee field.
       // I'm focusing and closing menu to put just cursor on the field.
       // I don't need to see suggestions immiedietly.
-      if (_payeeRef is not null)
+      if (_receiverRef is not null)
       {
-        await _payeeRef.FocusAsync();
-        await _payeeRef.CloseMenuAsync();
+        await _receiverRef.FocusAsync();
+        await _receiverRef.CloseMenuAsync();
       }
     }
+  }
+
+  private async Task UpdateTransactionType(string value) 
+  {
+    if (_transactionTypeRef is not null)
+    {
+#pragma warning disable BL0005
+// Component parameter should not be set outside of its component
+// Justification: I need to control this value manually since
+// when value is "Transfer", I must change list of external 
+// receivers to personal accounts.
+      _transactionTypeRef.Value = value;
+#pragma warning restore BL0005
+
+      _model.TransactionType = value;
+      if (_transactionTypeRef.Value == "Transfer") 
+      {
+        _searchSpaceReceivers = _knownAccounts;
+      }
+      else {
+        _searchSpaceReceivers = _knownPayees;
+      }
+    }
+
+    await Task.CompletedTask;
   }
 }

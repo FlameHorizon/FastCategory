@@ -6,18 +6,21 @@ public class QifBuilder {
   private const string _header =
 """
 !Account
-NWspólne
+N#AccountName#
 TInvoice
 D[PLN]
 """;
 
   private readonly StringBuilder _sb = new();
 
-  public QifBuilder() {
+  private readonly string _source = "";
+
+  public QifBuilder(string source) {
+    _source = source;
   }
 
   public string Build() {
-    return _header + Environment.NewLine + _sb.ToString().TrimEnd();
+    return _header.Replace("#AccountName#", _source) + Environment.NewLine + _sb.ToString().TrimEnd();
   }
 
   public QifBuilder WithDate(DateTime dt) {
@@ -65,6 +68,18 @@ D[PLN]
     return this;
   }
 
+  public QifBuilder WithTransferDetails(string from, string to, decimal amount) {
+    _sb.AppendLine($"P{amount.ToString("F2")} PLN {from} -> {amount.ToString("F2")} PLN {to}");
+
+    // Always pick external account.
+    if (from == _source) {
+      _sb.AppendLine($"L[{to}]");
+    }
+    else {
+      _sb.AppendLine($"L[{from}]");
+    }
+    return this; 
+  }
 
   /// <summary>
   /// Add notes to the transaction. Supports multiline notes.
@@ -74,7 +89,7 @@ D[PLN]
   public QifBuilder WithNote(string text) {
     string[] split = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
     foreach (var value in split) {
-      _sb.AppendLine("N" + value);
+      _sb.AppendLine("M" + value);
     }
     return this;
   }
@@ -88,6 +103,22 @@ D[PLN]
     }
     else if (payment.TransactionType == MMEXTransactionTypes.Deposit) {
       WithTotalDeposit(payment.TotalAmount);
+    }
+    else if (payment.TransactionType == MMEXTransactionTypes.Transfer) {
+      if (payment.TotalAmount > 0) {
+        // Deposit - we are receiving transfer.
+        WithTotalDeposit(payment.TotalAmount);
+        WithTransferDetails(payment.Payee, _source, payment.TotalAmount);
+      }
+      else {
+        // Withdrawal - we are sending money somewhere.
+        WithTotalCost(-payment.TotalAmount);
+        WithTransferDetails(_source, payment.Payee, -payment.TotalAmount);
+      }
+
+      WithNote(payment.Notes);
+      EndTransaction();
+      return this;
     }
     else {
       throw new NotSupportedException(
@@ -120,4 +151,5 @@ D[PLN]
     EndTransaction();
     return this;
   }
+
 }

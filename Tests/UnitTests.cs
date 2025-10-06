@@ -155,12 +155,12 @@ public class UnitTests {
     // which will be used most often by me.
     // This is the assumption which I've made myself
     // to make life easier.
-    var builder = new QifBuilder();
+    var builder = new QifBuilder("Account 1");
 
     const string expected =
 """
 !Account
-NWspólne
+NAccount 1
 TInvoice
 D[PLN]
 
@@ -173,7 +173,7 @@ D[PLN]
 
   [Fact]
   public void QifBuilder_Builds_WithAdditionalSetup() {
-    var builder = new QifBuilder();
+    var builder = new QifBuilder("Account 1");
     string actual = builder
       .StartTransaction()
       .WithDate(DateTime.Parse("2025-08-29"))
@@ -198,13 +198,13 @@ D[PLN]
     Assert.Contains("$-129.55", actual);
     Assert.Contains("SJedzenie:Inne", actual);
     Assert.Contains("$-1.00", actual);
-    Assert.Contains("NSoczki", actual);
+    Assert.Contains("MSoczki", actual);
     Assert.EndsWith("^", actual);
   }
 
   [Fact]
   public void QifBuilder_Builds_QifString_WhenPaymentIsDeposit() {
-    var builder = new QifBuilder();
+    var builder = new QifBuilder("Account 1");
     var p = new Payment(
       date: DateTime.Now,
       transactionType: MMEXTransactionTypes.Deposit,
@@ -223,16 +223,71 @@ D[PLN]
   }
 
   [Fact]
+  public void QifBuilder_Builds_QifString_WhenPaymentIsIncommingTransfer() {
+    var builder = new QifBuilder("Account 1");
+    var p = new Payment(
+      date: DateTime.Now,
+      transactionType: MMEXTransactionTypes.Transfer,
+      totalAmount: 100.00m,
+      payee: "Account 2",
+      categories: [],
+      notes: "Note 1"
+    );
+
+    string actual = builder.AddTransaction(p).Build();
+
+    Assert.Contains("T100.00", actual);
+    Assert.Contains("P100.00 PLN Account 2 -> 100.00 PLN Account 1", actual);
+    Assert.Contains("L[Account 2]", actual);
+    Assert.Contains("MNote 1", actual);
+  }
+  
+  [Fact]
+  public void QifBuilder_Builds_QifString_WhenPaymentIsOutgoingTransfer() {
+    var builder = new QifBuilder("Account 1");
+    var p = new Payment(
+      date: DateTime.Now,
+      transactionType: MMEXTransactionTypes.Transfer,
+      totalAmount: -100.00m,
+      payee: "Account 2",
+      categories: [],
+      notes: "Note 1"
+    );
+
+    string actual = builder.AddTransaction(p).Build();
+
+    Assert.Contains("T-100.00", actual);
+    Assert.Contains("P100.00 PLN Account 1 -> 100.00 PLN Account 2", actual);
+    Assert.Contains("L[Account 2]", actual);
+    Assert.Contains("MNote 1", actual);
+  }
+
+  [Fact]
   public void QifBuilder_Builds_NotesWithMultiline() {
-    var builder = new QifBuilder();
+    var builder = new QifBuilder("Account 1");
     string actual = builder
       .StartTransaction()
       .WithNote("Soczki" + Environment.NewLine + "Ziemniak")
       .EndTransaction()
       .Build();
 
-    Assert.Contains("NSoczki", actual);
-    Assert.Contains("NZiemniak", actual);
+    Assert.Contains("MSoczki", actual);
+    Assert.Contains("MZiemniak", actual);
+  }
+
+  [Fact]
+  public void QifBuilder_Build_Transfer() {
+    var builder = new QifBuilder("Account 1");
+    string actual = builder
+      .StartTransaction()
+      .WithTotalDeposit(100.00m)
+      .WithTransferDetails("Account 1", "Account 2", 100.00m)
+      .EndTransaction()
+      .Build();
+
+    Assert.Contains("T100.00", actual);
+    Assert.Contains("P100.00 PLN Account 1 -> 100.00 PLN Account 2", actual);
+    Assert.Contains("L[Account 2]", actual);
   }
 
   [Fact]

@@ -22,7 +22,7 @@ public class TransactionForm {
   /// <summary>
   /// Person or entity receiving the payment.
   /// </summary>
-  public string Payee { get; set; } = string.Empty;
+  public string Receiver { get; set; } = string.Empty;
 
   /// <summary>
   /// Categories associated with the transaction.

@@ -25,6 +25,10 @@ public class Payment {
     Notes = notes;
 
     // Validation
+    if (TransactionType == MMEXTransactionTypes.Transfer) {
+      // Skip check. Special case.
+      return;
+    }
 
     decimal sum = categories.Sum(x => x.Amount);
     if (sum != totalAmount) {
