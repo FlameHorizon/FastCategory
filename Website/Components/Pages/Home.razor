@@ -51,7 +51,7 @@
   <MudItem xs="12" sm="6" md="6">
     
     @* TODO: Think about have I can make this button a bit nicer. Although it is not ugly right now. *@
-    <MudFileUpload T="IBrowserFile" FilesChanged="UploadBankStatement">
+    <MudFileUpload T="IBrowserFile" FilesChanged="UploadBankStatement" Accept=".csv">
         <ActivatorContent>
             <MudButton Variant="Variant.Filled"
                       Color="Color.Primary"
@@ -572,7 +572,11 @@
 
   private async Task UploadBankStatement(IBrowserFile file)
   {
-    // @@TODO: Allow user (for now) only to upload csv files.
+    if (Path.GetExtension(file.Name).ToLower() != ".csv")
+    {
+      Snackbar.Add("Bank statements can be only be in CSV format.", Severity.Warning);
+      return;
+    }
 
     // @@NOTE: Uploading bank statement for the second time
     // will override previous value.
