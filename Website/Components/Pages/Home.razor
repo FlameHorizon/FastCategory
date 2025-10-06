@@ -13,11 +13,6 @@
 @using System.ComponentModel.DataAnnotations
 @inject ISnackbar Snackbar
 
-@*
-  @@TODO: Add support for transfers. When transfer is detected instead of
-  show text "Payee", show text "Transfer to" and show list of known banking accounts.
-*@
-
 @* 
   @@BUG: There is a bug in the application which prevents adding new split categories
   or saving them using keyboard shortcuts when more than one tab open in the browser
@@ -45,7 +40,7 @@
 <PageTitle>Home</PageTitle>
 
 @* 
-  @@NOTE: For some reason <div class="d-flex gap-4 justify-content-center"> does not justifies content.
+  @@HACK: For some reason <div class="d-flex gap-4 justify-content-center"> does not justifies content.
   Maybe, css file is missing?
   Using style="..." instead.
   Same thing goes for align-items.
@@ -218,7 +213,7 @@
 <MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode"/>
 <MudPopoverProvider />
 
-@* Needed for snackbars *@
+@* Needed for snackbars/toasts *@
 <MudSnackbarProvider />
 
 <script>
@@ -662,6 +657,9 @@
     }
   }
 
+  // Updating transaction type might trigger change in search space
+  // for receivers. It does not make sense to search in payee's names
+  // when transferring money between own accounts.
   private async Task UpdateTransactionType(string value) 
   {
     if (_transactionTypeRef is not null)
