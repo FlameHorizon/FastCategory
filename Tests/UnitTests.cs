@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+
 using Core;
 
 namespace Tests;
@@ -241,7 +242,7 @@ D[PLN]
     Assert.Contains("L[Account 2]", actual);
     Assert.Contains("MNote 1", actual);
   }
-  
+
   [Fact]
   public void QifBuilder_Builds_QifString_WhenPaymentIsOutgoingTransfer() {
     var builder = new QifBuilder("Account 1");

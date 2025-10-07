@@ -78,7 +78,7 @@ D[PLN]
     else {
       _sb.AppendLine($"L[{from}]");
     }
-    return this; 
+    return this;
   }
 
   /// <summary>
