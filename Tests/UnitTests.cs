@@ -10,7 +10,7 @@ public class UnitTests {
   public void Check_If_Ctor_Works() {
     var p = new Payment(
       date: DateTime.Parse("2025-01-01 14:00:00"),
-      transactionType: MMEXTransactionTypes.Widthdrawl,
+      transactionType: MMEXTransactionTypes.Withdrawal,
       totalAmount: 100.0m,
       payee: "Maciej Piotrowski",
       categories: [
@@ -23,7 +23,7 @@ public class UnitTests {
     );
 
     Assert.Equal(DateTime.Parse("2025-01-01 14:00:00"), p.Date);
-    Assert.Equal(MMEXTransactionTypes.Widthdrawl, p.TransactionType);
+    Assert.Equal(MMEXTransactionTypes.Withdrawal, p.TransactionType);
     Assert.Equal(100.0m, p.TotalAmount);
     Assert.Equal("Maciej Piotrowski", p.Payee);
     Assert.Equal(new Category("Samochód", "Paliwo", 100.0m), p.Categories.First());
@@ -35,7 +35,7 @@ public class UnitTests {
 
     Action act = () => _ = new Payment(
       date: DateTime.Parse("2025-01-01 14:00:00"),
-      transactionType: MMEXTransactionTypes.Widthdrawl,
+      transactionType: MMEXTransactionTypes.Withdrawal,
       totalAmount: 100.0m,
       payee: "Maciej Piotrowski",
       categories: [
@@ -340,8 +340,8 @@ D[PLN]
     Assert.Single(actual);
 
     BankTransaction t = actual.First();
-    Assert.Equal("<number>", t.GetRecieverBankAccount());
-    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<number>", t.GetReceiverBankAccount());
+    Assert.Equal("<name>", t.GetReceiverName());
     Assert.Equal("<title>", t.GetTitle());
   }
 
@@ -388,8 +388,8 @@ D[PLN]
     Assert.Single(actual);
 
     BankTransaction t = actual.First();
-    Assert.Equal("<number>", t.GetRecieverBankAccount());
-    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<number>", t.GetReceiverBankAccount());
+    Assert.Equal("<name>", t.GetReceiverName());
     Assert.Equal("<title>", t.GetTitle());
   }
 
@@ -430,8 +430,8 @@ D[PLN]
     Assert.Single(actual);
 
     BankTransaction t = actual.First();
-    Assert.Equal("<number>", t.GetRecieverBankAccount());
-    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<number>", t.GetReceiverBankAccount());
+    Assert.Equal("<name>", t.GetReceiverName());
     Assert.Equal("<address>", t.GetAddress());
   }
 
@@ -445,8 +445,8 @@ D[PLN]
     Assert.Single(actual);
 
     BankTransaction t = actual.First();
-    Assert.Equal("<number>", t.GetRecieverBankAccount());
-    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<number>", t.GetReceiverBankAccount());
+    Assert.Equal("<name>", t.GetReceiverName());
     Assert.Equal("<title>", t.GetTitle());
   }
 
@@ -460,8 +460,8 @@ D[PLN]
     Assert.Single(actual);
 
     BankTransaction t = actual.First();
-    Assert.Equal("<number>", t.GetRecieverBankAccount());
-    Assert.Equal("<name>", t.GetRecieverName());
+    Assert.Equal("<number>", t.GetReceiverBankAccount());
+    Assert.Equal("<name>", t.GetReceiverName());
     Assert.Equal("<title>", t.GetTitle());
   }
 

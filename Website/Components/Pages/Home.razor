@@ -278,7 +278,7 @@
 
   private IEnumerable<string> _transactionTypes = [
     "Deposit",
-    "Withdrawl",
+    "Withdrawal",
     "Transfer"
   ];
   
@@ -305,7 +305,7 @@
   protected override void OnInitialized()
   {
     _searchSpaceCategory = AppSettingsOptions.Value.TransactionCategories.ToArray();
-    _knownPayees = AppSettingsOptions.Value.Recievers.ToArray();
+    _knownPayees = AppSettingsOptions.Value.Receivers.ToArray();
     _knownAccounts = AppSettingsOptions.Value.Accounts.ToArray();
     _categorySearchEngine = new CategorySearchEngine(_searchSpaceCategory);
     Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -374,7 +374,7 @@
     var transactionType = _model.TransactionType switch
     {
       "Deposit" => MMEXTransactionTypes.Deposit,
-      "Withdrawl" => MMEXTransactionTypes.Widthdrawl,
+      "Withdrawal" => MMEXTransactionTypes.Withdrawal,
       "Transfer" => MMEXTransactionTypes.Transfer,
       _ => MMEXTransactionTypes.Unknown
     };
@@ -467,7 +467,7 @@
     _model.Categories.Add(new CategoryAmount());
 
     await PrefillFormWithNextTransaction();
-    Snackbar.Add("Transaction created successfuly.", Severity.Success);
+    Snackbar.Add("Transaction created successfully.", Severity.Success);
     await InvokeAsync(StateHasChanged);
   }
 
@@ -490,7 +490,7 @@
     {
       if (_instance != null)
       {
-        await _instance.OnValidSubmit(null);
+        await _instance.OnValidSubmit(null!);
       }
     }
   }
@@ -624,12 +624,12 @@
   {
     if (_bankTransactions != null && _bankTransactions.Count > 0)
     {
-      var next = _bankTransactions.Dequeue();
+      BankTransaction? next = _bankTransactions.Dequeue();
       _model.Date = next.CurrencyDate;
 
       // @@NOTE: Using absolute values here since TransactionType
       // will determine if money should be added to bank account
-      // or substracted from it.
+      // or subtracted from it.
       _model.TotalAmount = Math.Abs(next.Amount);
 
       // @@HACK: Since total amount component is not bound to a
@@ -660,7 +660,7 @@
       else if (next.TransactionType == BankTransactionType.OutgoingAccountTransfer
         || next.TransactionType == BankTransactionType.StandingOrder)
       {
-        sb.AppendLine($"Nazwa odbiorcy: {next.GetRecieverName()}");
+        sb.AppendLine($"Nazwa odbiorcy: {next.GetReceiverName()}");
         sb.AppendLine($"Tytul: {next.GetTitle()}");
       }
 
@@ -675,7 +675,7 @@
 
       // Since date and transaction type are already filled, focus on Payee field.
       // I'm focusing and closing menu to put just cursor on the field.
-      // I don't need to see suggestions immiedietly.
+      // I don't need to see suggestions immediately.
       if (_receiverRef is not null)
       {
         await _receiverRef.FocusAsync();

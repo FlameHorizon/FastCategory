@@ -1,7 +1,7 @@
 namespace Core;
 
 public enum MMEXTransactionTypes {
-  Widthdrawl,
+  Withdrawal,
   Deposit,
   Transfer,
   Unknown

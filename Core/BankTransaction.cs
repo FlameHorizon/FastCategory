@@ -12,7 +12,7 @@ public class BankTransaction {
   public string UnnamedProperty2 { get; set; } = string.Empty;
   public string UnnamedProperty3 { get; set; } = string.Empty;
 
-  // @@NOTE: Different information depeneding on the context
+  // @@NOTE: Different information depending on the context
   // will be available at different times. If information is not available
   // null will be returned.
 
@@ -85,11 +85,11 @@ public class BankTransaction {
     return DateTime.Parse(value);
   }
 
-  public string? GetRecieverBankAccount() {
+  public string? GetReceiverBankAccount() {
     return GetTextAfter(TransactionDescription, "Rachunek odbiorcy: ");
   }
 
-  public string? GetRecieverName() {
+  public string? GetReceiverName() {
     return GetTextAfter(UnnamedProperty1, "Nazwa odbiorcy: ");
   }
 
@@ -106,11 +106,11 @@ public class BankTransaction {
   }
 
   /// <summary>
-  /// Returns string after first occurence of a given value from a given input.
+  /// Returns string after first occurrence of a given value from a given input.
   /// </summary>
-  /// <param name="input">String whithin which search will be done.</param>
+  /// <param name="input">String within which search will be done.</param>
   /// <param name="value">String which will be used as separator.</param>
-  /// <returns>String after first occurence of value. Trimmed.</returns>
+  /// <returns>String after first occurrence of value. Trimmed.</returns>
   private static string? GetTextAfter(string input, string value) {
     int len = value.Length;
     int index = input.IndexOf(value);
