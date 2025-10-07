@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace Core;
@@ -10,6 +11,8 @@ N#AccountName#
 TInvoice
 D[PLN]
 """;
+
+  private readonly IFormatProvider _formatProvider = CultureInfo.GetCultureInfo("en-US");
 
   private readonly StringBuilder _sb = new();
 
@@ -24,12 +27,12 @@ D[PLN]
   }
 
   public QifBuilder WithDate(DateTime dt) {
-    _sb.AppendLine("D" + dt.ToString("yyyy-MM-dd"));
+    _sb.AppendLine("D" + dt.ToString("yyyy-MM-dd", _formatProvider));
     return this;
   }
 
   public QifBuilder WithTotalCost(decimal value) {
-    _sb.AppendLine("T-" + value.ToString("F2"));
+    _sb.AppendLine("T-" + value.ToString("F2", _formatProvider));
     return this;
   }
 
@@ -44,7 +47,7 @@ D[PLN]
   }
 
   public QifBuilder WithSplitAmountCost(decimal value) {
-    _sb.AppendLine("$-" + value.ToString("F2"));
+    _sb.AppendLine("$-" + value.ToString("F2", _formatProvider));
     return this;
   }
 
@@ -59,24 +62,24 @@ D[PLN]
   }
 
   public QifBuilder WithTotalDeposit(decimal value) {
-    _sb.AppendLine("T" + value.ToString("F2"));
+    _sb.AppendLine("T" + value.ToString("F2", _formatProvider));
     return this;
   }
 
   public QifBuilder WithSplitAmountDeposit(decimal value) {
-    _sb.AppendLine("$" + value.ToString("F2"));
+    _sb.AppendLine("$" + value.ToString("F2", _formatProvider));
     return this;
   }
 
   public QifBuilder WithTransferDetails(string from, string to, decimal amount) {
-    _sb.AppendLine($"P{amount.ToString("F2")} PLN {from} -> {amount.ToString("F2")} PLN {to}");
+    _sb.AppendLine(_formatProvider, $"P{amount.ToString("F2", _formatProvider)} PLN {from} -> {amount.ToString("F2", _formatProvider)} PLN {to}");
 
     // Always pick external account.
     if (from == _source) {
-      _sb.AppendLine($"L[{to}]");
+      _sb.AppendLine(_formatProvider, $"L[{to}]");
     }
     else {
-      _sb.AppendLine($"L[{from}]");
+      _sb.AppendLine(_formatProvider, $"L[{from}]");
     }
     return this;
   }

@@ -1,6 +1,9 @@
+using System.Globalization;
+
 namespace Core;
 
 public class BankTransaction {
+  private readonly IFormatProvider _formatProvider = CultureInfo.GetCultureInfo("en-US");
   public DateTime OperationDate { get; set; }
   public DateTime CurrencyDate { get; set; }
   public BankTransactionType TransactionType { get; set; }
@@ -82,7 +85,7 @@ public class BankTransaction {
       return null;
     }
 
-    return DateTime.Parse(value);
+    return DateTime.Parse(value, _formatProvider);
   }
 
   public string? GetReceiverBankAccount() {
@@ -113,7 +116,7 @@ public class BankTransaction {
   /// <returns>String after first occurrence of value. Trimmed.</returns>
   private static string? GetTextAfter(string input, string value) {
     int len = value.Length;
-    int index = input.IndexOf(value);
+    int index = input.IndexOf(value, StringComparison.CurrentCulture);
     if (index == -1) {
       return null;
     }
@@ -126,12 +129,12 @@ public class BankTransaction {
     int afterLen = after.Length;
     int beforeLen = before.Length;
 
-    int indexAfter = input.IndexOf(after);
+    int indexAfter = input.IndexOf(after, StringComparison.CurrentCulture);
     if (indexAfter == -1) {
       return null;
     }
 
-    int indexBefore = input.IndexOf(before);
+    int indexBefore = input.IndexOf(before, StringComparison.CurrentCulture);
     if (indexBefore == -1) {
       return null;
     }

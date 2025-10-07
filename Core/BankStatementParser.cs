@@ -1,6 +1,11 @@
-using Core;
+using System.Globalization;
+
+namespace Core;
 
 public static class BankStatementParser {
+
+  private static readonly IFormatProvider _formatProvider = CultureInfo.GetCultureInfo("en-US").DateTimeFormat;
+
   public static IEnumerable<BankTransaction> Parse(string[] lines, bool skipHeader) {
     List<BankTransaction> result = [];
 
@@ -16,12 +21,12 @@ public static class BankStatementParser {
       }
 
       BankTransaction value = new() {
-        OperationDate = DateTime.Parse(split[0].Trim('"')),
-        CurrencyDate = DateTime.Parse(split[1].Trim('"')),
+        OperationDate = DateTime.Parse(split[0].Trim('"'), _formatProvider),
+        CurrencyDate = DateTime.Parse(split[1].Trim('"'), _formatProvider),
         TransactionType = GetTransactionType(split[2].Trim('"')),
-        Amount = decimal.Parse(split[3].Trim('"')),
+        Amount = decimal.Parse(split[3].Trim('"'), _formatProvider),
         Currency = split[4].Trim('"'),
-        BalanceAfterTransaction = decimal.Parse(split[5].Trim('"')),
+        BalanceAfterTransaction = decimal.Parse(split[5].Trim('"'), _formatProvider),
         TransactionDescription = split[6].Trim('"'),
         UnnamedProperty1 = split[7].Trim('"'),
         UnnamedProperty2 = split[8].Trim('"'),
