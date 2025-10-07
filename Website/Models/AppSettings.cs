@@ -1,4 +1,4 @@
-namespace Website.Components;
+namespace Website.Models;
 
 public class AppSettings {
   public List<string> TransactionCategories { get; set; } = new();

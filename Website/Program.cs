@@ -2,6 +2,7 @@ using MudBlazor;
 using MudBlazor.Services;
 
 using Website.Components;
+using Website.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
