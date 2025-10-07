@@ -65,7 +65,7 @@
 
   <MudItem xs="12" sm="6" md="6">
     <MudPaper Class="pa-4">
-      <EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
+      <EditForm Model="@_model" OnValidSubmit="@OnValidSubmit">
         <DataAnnotationsValidator/>
 
         <MudDatePicker 
@@ -81,6 +81,7 @@
           T="string"
           @ref="_transactionTypeRef"
           ValueChanged="@(v => UpdateTransactionType(v))"
+          For="@(() => _model.TransactionType)"
           Label="Transaction type" >
           @foreach (var opt in _transactionTypes)
           {
@@ -93,21 +94,32 @@
            the Value will be overwritten with the user input which allows it to be 
            passed to the validation function. That way, user is NOT forced to provide
            values which exists only on the list.
+        *@
+
+         @* 
+           @@TODO: Receiver filed is highlighted as "incorrect" when form is saved
+           using Alt + S. It shouldn't be since no value has been yet provided.
+           User will do it.
+
+           @@BUG: Alt + S seems to to bypass validation as well and allow user 
+           to commit transaction without specifying Receiver.
          *@
 
         <MudAutocomplete
           @bind-Value="_model.Receiver"
           @ref="_receiverRef"
+          For="@(() => _model.Receiver)"
           Label="Receiver/Sender"
           CoerceValue="true"
           SearchFunc="SearchReceivers">
         </MudAutocomplete>
 
         <MudNumericField
+          @ref="_totalAmountRef"
+          For="@(() => _model.TotalAmount)"
           T="decimal"
           Format="C"
           Culture="_culture"
-          @ref="_totalAmountRef"
           ValueChanged="@(v => UpdateTotalAmount(v))"
           Label="Amount" />
 
@@ -125,6 +137,17 @@
                 SearchFunc="SearchCategory"
                 @ref="category.Ref" />
 
+              @* 
+                @@NOTE: As of of know, validation on each split-level is not available.
+                This requires more work since Blazor does not support automatically traversing 
+                lists or collections when validating nested objects.
+                This feature has been added to .NET 10 which is now (2025-10-08) still in preview.
+                Planned release maybe in November?
+                See: https://learn.microsoft.com/en-us/aspnet/core/blazor/forms/validation?view=aspnetcore-10.0#nested-objects-and-collection-types
+                Here how it could be implemented: https://learn.microsoft.com/en-us/aspnet/core/blazor/forms/validation?view=aspnetcore-10.0#nested-objects-and-collection-types
+
+                This is check performed in OnValidSubmit method.
+              *@
               <MudNumericField
                 @bind-Value="category.Amount"
                 Format="C"
@@ -344,7 +367,7 @@
     }
   }
 
-  private async Task OnValidSubmit()
+  private async Task OnValidSubmit(EditContext context)
   {
     // @@NOTE: Right now, I'm assuming the form is always valid.
     // In a real application, you would check the validation state.
@@ -467,7 +490,7 @@
     {
       if (_instance != null)
       {
-        await _instance.OnValidSubmit();
+        await _instance.OnValidSubmit(null);
       }
     }
   }

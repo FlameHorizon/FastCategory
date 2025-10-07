@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using Website.Models.Validation;
+
 using MudBlazor;
 
 namespace Website.Models;
@@ -7,21 +10,26 @@ public class TransactionForm {
   /// <summary>
   /// Date when transaction occured.
   /// </summary>
+  [Required]
   public DateTime? Date { get; set; } = DateTime.Now;
 
   /// <summary>
   /// Type of the transaction. Either "Expense" or "Income".
   /// </summary>
-  public string TransactionType { get; set; } = "Withdrawl";
+  [Required]
+  public string TransactionType { get; set; } = "";
 
   /// <summary>
   /// Total amount of the transaction.
   /// </summary>
+  [Required]
+  [NotValue(0)]
   public decimal TotalAmount { get; set; }
 
   /// <summary>
   /// Person or entity receiving the payment.
   /// </summary>
+  [Required]
   public string Receiver { get; set; } = string.Empty;
 
   /// <summary>
@@ -36,7 +44,10 @@ public class TransactionForm {
 }
 
 public class CategoryAmount {
+  [Required]
   public string Name { get; set; } = string.Empty;
+
+  [Required]
   public decimal Amount { get; set; }
 
   /// <summary>
