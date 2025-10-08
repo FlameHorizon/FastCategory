@@ -619,8 +619,26 @@
   {
     if (_bankTransactions != null && _bankTransactions.Count > 0)
     {
-      BankTransaction? next = _bankTransactions.Dequeue();
+      BankTransaction next = _bankTransactions.Dequeue();
       _model.Date = next.CurrencyDate;
+
+      // Update transaction type automatically as well.
+
+      // @@TODO: Incomplete.
+      _model.TransactionType = next.TransactionType switch {
+        BankTransactionType.StandingOrder
+        or BankTransactionType.CardPayment => "Withdrawal",
+
+        _ => "Withdrawal"
+      };
+
+#pragma warning disable BL0005
+// Component parameter should not be set outside of its component
+// Justification: When saving transaction via Alt+S value of last transaction type is not rendered.
+      _transactionTypeRef.Value = _model.TransactionType;
+#pragma warning restore BL0005
+
+      await _transactionTypeRef.ForceUpdate();
 
       // @@NOTE: Using absolute values here since TransactionType
       // will determine if money should be added to bank account
