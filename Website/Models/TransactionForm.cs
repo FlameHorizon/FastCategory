@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+using Core;
+
 using MudBlazor;
 
 using Website.Models.Validation;
@@ -9,7 +11,7 @@ namespace Website.Models;
 public class TransactionForm {
 
   /// <summary>
-  /// Date when transaction occured.
+  /// Date when transaction occurred.
   /// </summary>
   [Required]
   public DateTime? Date { get; set; } = DateTime.Now;
@@ -18,6 +20,7 @@ public class TransactionForm {
   /// Type of the transaction. Either "Expense" or "Income".
   /// </summary>
   [Required]
+  [EnumContains(typeof(MMEXTransactionTypes))]
   public string TransactionType { get; set; } = "";
 
   /// <summary>
