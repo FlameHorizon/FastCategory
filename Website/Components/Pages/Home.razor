@@ -171,6 +171,12 @@
               Split
           </MudButton>
 
+          @* 
+            @@BUG: After loading bank statement and adding anything extra
+            to the notes field, notes are not replaced by new value for
+            next bank transaction. Value is the same as for prev. transaction.
+            If user does not add anything to notes field, value is updated correctly.
+          *@
           <MudTextField 
             @bind-Value="_model.Notes" 
             @ref="_notesRef"
