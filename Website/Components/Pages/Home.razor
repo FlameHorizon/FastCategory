@@ -265,6 +265,7 @@
   private MudNumericField<decimal>? _totalAmountRef;
   private MudTextField<string> _notesRef;
   private MudSelect<string> _transactionTypeRef;
+  private DotNetObjectReference<Home>? _thisComponent;
 
   // Control dark mode based on system preference.
   private bool _isDarkMode = true;
@@ -328,7 +329,12 @@
         _isDarkMode = await _mudThemeProvider.GetSystemDarkModeAsync();
       }
 
-      await JSRuntime.InvokeVoidAsync("JsFunctions.addKeyboardListenerEvent");
+      _thisComponent = DotNetObjectReference.Create(this);
+      if (_thisComponent is not null)
+      {
+        await JSRuntime.InvokeVoidAsync("EnableKeyboardCapture", _thisComponent);
+      }
+
       StateHasChanged();
     }
   }
@@ -471,22 +477,16 @@
   /// </summary>
   /// <param name="e">Information about which key was pressed.</param>
   [JSInvokable]
-  public static async Task JsKeyDown(KeyboardEventArgs e)
+  public async Task JsKeyDown(KeyboardEventArgs e)
   {
     if (e.AltKey && e.Key.ToLower() == "a")
     {
-      if (_instance != null)
-      {
-        _instance.AddCategory();
-      }
+      AddCategory();
     }
 
     if (e.AltKey && e.Key.ToLower() == "s")
     {
-      if (_instance != null)
-      {
-        await _instance.OnValidSubmit(null!);
-      }
+      await OnValidSubmit(null!);
     }
   }
 
