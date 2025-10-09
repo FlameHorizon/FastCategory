@@ -443,32 +443,35 @@
     Console.WriteLine("Form is valid");
 
     // Setup model for the new transaction.
-    _model.Receiver = "";
+    if (_receiverRef is not null)
+    {
+      _model.Receiver = "";
 
+      // @@NOTE: When I invoke StateHasChanged at the end of the method
+      // component is not refreshed. If I put it here, everything works.
+      // using await InvokeAsync(() => _receiverRef.ForceRender(true)) also works
+      // as a substitute of await InvokeAsync(StateHasChanged).
+      // I'm using ForceRender since, I can target which component 
+      // has to be updated, also ForceRender also does StateHasChanged() call.
+
+      _receiverRef.ForceRender(true);
+      await _receiverRef.BlurAsync();
+      await _receiverRef.FocusAsync();
+      await _receiverRef.CloseMenuAsync();
+    }
+    
     // @@BUG: It is really hard to clear category name when Alt+S is pressed.
     // I've noticed that most of the problems stems from JsKeyDown method.
     // Everything works just fine when I press buttons on webpage instead
     // of using keyboard shortcuts.
-
-    // @@BUG: For some reason, why I use keypress (Alt+S) to save
-    // transaction, payee and category value is not refreshed after StateHasChanged.
-    // I'm doing this manually then.
-    if (_receiverRef is not null)
-    {
-#pragma warning disable BL0005
-// Component parameter should not be set outside of its component
-// Justification: When saving transaction via Alt+S value of last payee is not rendered.
-      _receiverRef.Value = "";
-#pragma warning restore BL0005
-
-      await InvokeAsync(_receiverRef.ForceUpdate);
-    }
 
     _model.Categories.Clear();
     _model.Categories.Add(new CategoryAmount());
 
     await PrefillFormWithNextTransaction();
     Snackbar.Add("Transaction created successfully.", Severity.Success);
+
+    // @@TODO: Maybe I don't need to call this here?
     await InvokeAsync(StateHasChanged);
   }
 
@@ -481,7 +484,7 @@
   {
     if (e.AltKey && e.Key.ToLower() == "a")
     {
-      AddCategory();
+      await AddCategory();
     }
 
     if (e.AltKey && e.Key.ToLower() == "s")
@@ -495,14 +498,14 @@
   /// If there is unallocated sum of money, new category will auto-fill with 
   /// the difference.
   /// </summary>
-  private void AddCategory()
+  private async Task AddCategory()
   {
     // Drop focus from any input to avoid issues with MudBlazor components.
     foreach (var cat in _model.Categories)
     {
       if (cat.Ref is not null)
       {
-        cat.Ref.CloseMenuAsync();
+        await cat.Ref.CloseMenuAsync();
       }
     }
 
@@ -525,9 +528,9 @@
     // Then, focus the newly added category input.
     if (newCategory.Ref is not null)
     {
-      newCategory.Ref.FocusAsync();
+      await newCategory.Ref.FocusAsync();
     }
-    InvokeAsync(StateHasChanged);
+    StateHasChanged();
   }
 
   private void RemoveCategory(CategoryAmount category)
@@ -625,20 +628,24 @@
       // Update transaction type automatically as well.
 
       // @@TODO: Incomplete.
-      _model.TransactionType = next.TransactionType switch {
+      string transactionType = next.TransactionType switch {
         BankTransactionType.StandingOrder
         or BankTransactionType.CardPayment => "Withdrawal",
 
         _ => "Withdrawal"
       };
+      await UpdateTransactionType(transactionType);
+      await _transactionTypeRef.ForceUpdate();
 
-#pragma warning disable BL0005
+      @* _transactionTypeRef.ForceRender(true); *@
+
+@* #pragma warning disable BL0005
 // Component parameter should not be set outside of its component
 // Justification: When saving transaction via Alt+S value of last transaction type is not rendered.
       _transactionTypeRef.Value = _model.TransactionType;
 #pragma warning restore BL0005
 
-      await _transactionTypeRef.ForceUpdate();
+      await _transactionTypeRef.ForceUpdate(); *@
 
       // @@NOTE: Using absolute values here since TransactionType
       // will determine if money should be added to bank account
@@ -689,11 +696,11 @@
       // Since date and transaction type are already filled, focus on Payee field.
       // I'm focusing and closing menu to put just cursor on the field.
       // I don't need to see suggestions immediately.
-      if (_receiverRef is not null)
+      @* if (_receiverRef is not null)
       {
         await _receiverRef.FocusAsync();
         await _receiverRef.CloseMenuAsync();
-      }
+      } *@
     }
   }
 
