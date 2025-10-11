@@ -13,27 +13,6 @@
 @using System.ComponentModel.DataAnnotations
 @inject ISnackbar Snackbar
 
-@* 
-  @@BUG: There is a bug in the application which prevents adding new split categories
-  or saving them using keyboard shortcuts when more than one tab open in the browser
-  with the application.
-
-  Copilot suggests that the issue might be related to the static _instance field.
-  I have tried to remove the static keyword, but then the JSInvokable method can't
-  access the instance.
-
-  Personally, I don't know what might be the issue here. Have not seen this before.
-
-  To reproduce the issue:
-  1. Start the application.
-  2. First tab will open automatically.
-  3. Press bunch of times Alt + A to add new split categories.
-  4. Open new tab with the application.
-  5. In the new tab, try to add new split categories using Alt + A. It will work as well.
-  6. Go back to the first tab and try to add new split categories using Alt + A.
-     It will not work anymore.
-*@
-
 @inject IJSRuntime JSRuntime
 @inject Microsoft.Extensions.Options.IOptions<AppSettings> AppSettingsOptions
 
@@ -106,6 +85,7 @@
          *@
 
         <MudAutocomplete
+          T="string"
           @bind-Value="_model.Receiver"
           @ref="_receiverRef"
           For="@(() => _model.Receiver)"
@@ -171,12 +151,6 @@
               Split
           </MudButton>
 
-          @* 
-            @@BUG: After loading bank statement and adding anything extra
-            to the notes field, notes are not replaced by new value for
-            next bank transaction. Value is the same as for prev. transaction.
-            If user does not add anything to notes field, value is updated correctly.
-          *@
           <MudTextField 
             @bind-Value="_model.Notes" 
             @ref="_notesRef"
