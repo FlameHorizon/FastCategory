@@ -42,6 +42,12 @@
 
   </MudItem>
 
+  @*
+    GOAL: Goal for today is to unify how values are update for call controls.
+    Some of the are doing wacky stuff in order just to display correct
+    updated value.
+  *@
+
   <MudItem xs="12" sm="6" md="6">
     <MudPaper Class="pa-4">
       <EditForm Model="@_model" OnValidSubmit="@OnValidSubmit">
@@ -49,23 +55,25 @@
 
         <MudDatePicker 
           Label="Date" 
-          @bind-Date="_model.Date" 
           For="@(() => _model.Date)"
-          @onkeydown="OnKeyDownDate"
           DateFormat="yyyy-MM-dd"
           ShowToolbar="false"
+          @bind-Date="_model.Date" 
+          @onkeydown="OnKeyDownDate"
           autofocus/>
 
         <MudSelect 
           T="string"
-          @ref="_transactionTypeRef"
-          ValueChanged="@(v => UpdateTransactionType(v))"
+          Label="Transaction type" 
           For="@(() => _model.TransactionType)"
-          Label="Transaction type" >
+          ValueChanged="@(v => UpdateTransactionType(v))"
+          @ref="_transactionTypeRef">
+
           @foreach (var opt in _transactionTypes)
           {
             <MudSelectItem Value="opt">@opt</MudSelectItem>
           }
+
         </MudSelect>
 
         @* 
@@ -86,22 +94,23 @@
 
         <MudAutocomplete
           T="string"
+          Label="Receiver/Sender"
+          For="@(() => _model.Receiver)"
+          CoerceValue="true"
+          SearchFunc="SearchReceivers"
           @bind-Value="_model.Receiver"
           @ref="_receiverRef"
-          For="@(() => _model.Receiver)"
-          Label="Receiver/Sender"
-          CoerceValue="true"
-          SearchFunc="SearchReceivers">
-        </MudAutocomplete>
+        />
 
         <MudNumericField
-          @ref="_totalAmountRef"
-          For="@(() => _model.TotalAmount)"
           T="decimal"
+          Label="Amount" 
+          For="@(() => _model.TotalAmount)"
+          ValueChanged="@(v => UpdateTotalAmount(v))"
           Format="C"
           Culture="_culture"
-          ValueChanged="@(v => UpdateTotalAmount(v))"
-          Label="Amount" />
+          @ref="_totalAmountRef"
+        />
 
         <div>
           @foreach (var category in _model.Categories)
@@ -111,11 +120,12 @@
                 CoerceValue is needed to allow user to enter new categories.
               *@
               <MudAutocomplete
-                @bind-Value="category.Name"
                 Label="Category"
                 CoerceValue="true"
                 SearchFunc="SearchCategory"
-                @ref="category.Ref" />
+                @bind-Value="category.Name"
+                @ref="category.Ref" 
+              />
 
               @* 
                 @@NOTE: As of of know, validation on each split-level is not available.
@@ -129,11 +139,12 @@
                 This is check performed in OnValidSubmit method.
               *@
               <MudNumericField
-                @bind-Value="category.Amount"
+                Label="Split amount" 
                 Format="C"
                 Culture="_culture"
                 Immediate="true"
-                Label="Split amount" />
+                @bind-Value="category.Amount"
+              />
 
               <MudIconButton 
                 Icon="@Icons.Material.Filled.Delete" 
@@ -147,18 +158,19 @@
             Variant="Variant.Outlined" 
             Color="Color.Primary" 
             OnClick="AddCategory">
-              <MudIcon Icon="@Icons.Material.Filled.Add" />
+            <MudIcon Icon="@Icons.Material.Filled.Add" />
               Split
           </MudButton>
 
           <MudTextField 
-            @bind-Value="_model.Notes" 
-            @ref="_notesRef"
-            Lines="3"
             Label="Notes" 
+            Lines="3"
             Variant="Variant.Outlined" 
             Adornment="Adornment.Start" 
-            AdornmentColor="Color.Info"/>
+            AdornmentColor="Color.Info"
+            @bind-Value="_model.Notes" 
+            @ref="_notesRef"
+          />
 
         </div>
 
@@ -178,8 +190,8 @@
             Variant="Variant.Outlined" 
             Color="Color.Primary" 
             OnClick="@(() => ExportToDisc())">
-              <MudIcon Icon="@Icons.Material.Filled.Download" />
-              Export
+            <MudIcon Icon="@Icons.Material.Filled.Download" />
+            Export
           </MudButton>
       </div>
 
