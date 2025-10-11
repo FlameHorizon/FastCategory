@@ -53,6 +53,7 @@
       <EditForm Model="@_model" OnValidSubmit="@OnValidSubmit">
         <DataAnnotationsValidator/>
 
+        @* Update sources: user input, program *@
         <MudDatePicker 
           Label="Date" 
           For="@(() => _model.Date)"
@@ -62,12 +63,17 @@
           @onkeydown="OnKeyDownDate"
           autofocus/>
 
+        @* 
+          Since transaction type is also controlling Receiver/Sender
+          field, it requires a bit different approach how value is binded.
+        *@
         <MudSelect 
           T="string"
           Label="Transaction type" 
           For="@(() => _model.TransactionType)"
+          Value="_model.TransactionType"
           ValueChanged="@(v => UpdateTransactionType(v))"
-          @ref="_transactionTypeRef">
+          ValueExpression="@(() => _model.TransactionType)">
 
           @foreach (var opt in _transactionTypes)
           {
@@ -106,10 +112,11 @@
           T="decimal"
           Label="Amount" 
           For="@(() => _model.TotalAmount)"
+          Value="_model.TotalAmount"
           ValueChanged="@(v => UpdateTotalAmount(v))"
+          ValueExpression="@(() => _model.TotalAmount)"
           Format="C"
           Culture="_culture"
-          @ref="_totalAmountRef"
         />
 
         <div>
@@ -248,9 +255,7 @@
 @code {
   // Page related fields.
   private MudAutocomplete<string>? _receiverRef;
-  private MudNumericField<decimal>? _totalAmountRef;
   private MudTextField<string> _notesRef;
-  private MudSelect<string> _transactionTypeRef;
   private DotNetObjectReference<Home>? _thisComponent;
 
   // Control dark mode based on system preference.
@@ -281,19 +286,6 @@
   private CategorySearchEngine _categorySearchEngine;
   private string[] _knownPayees = [];
   private string[] _knownAccounts = [];
-
-  private static Home? _instance;
-
-#pragma warning disable CS8618
-// Non-nullable field '_categorySearchEngine' must contain a non-null value when exiting constructor. 
-// Consider adding the 'required' modifier or declaring the field as nullable.
-// Justification: _categorySearchEngine is initialized in OnInitialized method.
-  public Home()
-  {
-    _instance = this;
-  }
-
-#pragma warning restore CS8618
 
   protected override void OnInitialized()
   {
@@ -445,20 +437,25 @@
       await _receiverRef.FocusAsync();
       await _receiverRef.CloseMenuAsync();
     }
-    
-    // @@BUG: It is really hard to clear category name when Alt+S is pressed.
-    // I've noticed that most of the problems stems from JsKeyDown method.
-    // Everything works just fine when I press buttons on webpage instead
-    // of using keyboard shortcuts.
 
-    _model.Categories.Clear();
-    _model.Categories.Add(new CategoryAmount());
+    /* 
+      Because clearing entire set of categories and adding back one
+      does not notifies renderer to render new value, I will not removing
+      all elements from categories. I will always keep one which is rendered
+      and operate on in.
+    */ 
+    if (_model.Categories.Count >= 2)
+    {
+      _model.Categories.RemoveRange(1, _model.Categories.Count - 1);
+    }
+
+    _model.Categories[0].Name = "";
+    _model.Categories[0].Ref.ForceRender(true);
 
     await PrefillFormWithNextTransaction();
     Snackbar.Add("Transaction created successfully.", Severity.Success);
 
-    // @@TODO: Maybe I don't need to call this here?
-    await InvokeAsync(StateHasChanged);
+    StateHasChanged();
   }
 
   /// <summary>
@@ -548,12 +545,12 @@
   /// </summary>
   /// <param name="value">New value of TotalAmount</param>
   private void UpdateTotalAmount(decimal value)
-  {
+  {     
     _model.TotalAmount = value;
 
     if (_model.Categories.Count == 1)
     {
-      _model.Categories.ElementAt(0).Amount = value;
+      _model.Categories[0].Amount = value;
     }
   }
 
@@ -611,8 +608,6 @@
       BankTransaction next = _bankTransactions.Dequeue();
       _model.Date = next.CurrencyDate;
 
-      // Update transaction type automatically as well.
-
       // @@TODO: Incomplete.
       string transactionType = next.TransactionType switch {
         BankTransactionType.StandingOrder
@@ -620,42 +615,13 @@
 
         _ => "Withdrawal"
       };
-      await UpdateTransactionType(transactionType);
-      await _transactionTypeRef.ForceUpdate();
+      UpdateTransactionType(transactionType);
 
-      @* _transactionTypeRef.ForceRender(true); *@
-
-@* #pragma warning disable BL0005
-// Component parameter should not be set outside of its component
-// Justification: When saving transaction via Alt+S value of last transaction type is not rendered.
-      _transactionTypeRef.Value = _model.TransactionType;
-#pragma warning restore BL0005
-
-      await _transactionTypeRef.ForceUpdate(); *@
-
-      // @@NOTE: Using absolute values here since TransactionType
+      // @@NOTE: Using absolute value since TransactionType
       // will determine if money should be added to bank account
       // or subtracted from it.
-      _model.TotalAmount = Math.Abs(next.Amount);
 
-      // @@HACK: Since total amount component is not bound to a
-      // value directly using @bind-Value, I need to update it
-      // manually and force to render manually.
-      // Without these two lines below, component will not have
-      // value displayed.
-      if (_totalAmountRef is not null)
-      {
-#pragma warning disable BL0005
-// Component parameter should not be set outside of its component
-// Justification: When saving transaction via Alt+S value of last payee is not rendered.
-        _totalAmountRef.Value = Math.Abs(next.Amount);
-#pragma warning restore BL0005
-        await _totalAmountRef.ForceUpdate();
-      }
-
-      // This method call updates total amount (which is already set manually)
-      // and amount for the first category.
-      UpdateTotalAmount(_model.TotalAmount);
+      UpdateTotalAmount(Math.Abs(next.Amount));
 
       var sb = new StringBuilder();
       if (next.TransactionType == BankTransactionType.CardPayment
@@ -671,50 +637,19 @@
       }
 
       _model.Notes = sb.ToString();
-#pragma warning disable BL0005
-// Component parameter should not be set outside of its component
-// Justification: When saving transaction via Alt+S value of last payee is not rendered.
-      _notesRef.Value = _model.Notes;
-#pragma warning restore BL0005
-
-      await _notesRef.ForceUpdate();
-
-      // Since date and transaction type are already filled, focus on Payee field.
-      // I'm focusing and closing menu to put just cursor on the field.
-      // I don't need to see suggestions immediately.
-      @* if (_receiverRef is not null)
-      {
-        await _receiverRef.FocusAsync();
-        await _receiverRef.CloseMenuAsync();
-      } *@
     }
   }
 
   // Updating transaction type might trigger change in search space
   // for receivers. It does not make sense to search in payee's names
   // when transferring money between own accounts.
-  private async Task UpdateTransactionType(string value) 
+  private void UpdateTransactionType(string value) 
   {
-    if (_transactionTypeRef is not null)
-    {
-#pragma warning disable BL0005
-// Component parameter should not be set outside of its component
-// Justification: I need to control this value manually since
-// when value is "Transfer", I must change list of external 
-// receivers to personal accounts.
-      _transactionTypeRef.Value = value;
-#pragma warning restore BL0005
-
-      _model.TransactionType = value;
-      if (_transactionTypeRef.Value == "Transfer") 
-      {
-        _searchSpaceReceivers = _knownAccounts;
-      }
-      else {
-        _searchSpaceReceivers = _knownPayees;
-      }
-    }
-
-    await Task.CompletedTask;
+    // Alternative: Just update model?
+    _model.TransactionType = value;
+    if (_model.TransactionType == "Transfer") 
+      _searchSpaceReceivers = _knownAccounts;
+    else 
+      _searchSpaceReceivers = _knownPayees;
   }
 }
