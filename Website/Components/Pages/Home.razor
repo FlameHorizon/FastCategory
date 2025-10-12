@@ -239,7 +239,7 @@
 @code {
   // Page related fields.
   private MudAutocomplete<string>? _receiverRef;
-  private MudTextField<string> _notesRef;
+  private MudTextField<string>? _notesRef;
   private DotNetObjectReference<Home>? _thisComponent;
 
   // Control dark mode based on system preference.
@@ -267,7 +267,14 @@
   private string[] _searchSpaceCategory = [];
   private string[] _searchSpaceReceivers = [];
   private Queue<BankTransaction> _bankTransactions = [];
+
+#pragma warning disable CS8618
+  // Non-nullable field '_categorySearchEngine' must contain a non-null value when exiting constructor. 
+  // Consider adding the 'required' modifier or declaring the field as nullable.
+  // Justification: Field is set in OnInitialized method.
   private CategorySearchEngine _categorySearchEngine;
+#pragma warning restore CS8618
+
   private string[] _knownPayees = [];
   private string[] _knownAccounts = [];
 
@@ -437,9 +444,9 @@
     }
 
     _model.Categories[0].Name = "";
-    _model.Categories[0].Ref.ForceRender(true);
+    _model.Categories[0].Ref?.ForceRender(true);
 
-    await PrefillFormWithNextTransaction();
+    PrefillFormWithNextTransaction();
     Snackbar.Add("Transaction created successfully.", Severity.Success);
 
     StateHasChanged();
@@ -585,10 +592,10 @@
 
     _bankTransactions = new Queue<BankTransaction>(transactions);
 
-    await PrefillFormWithNextTransaction();
+    PrefillFormWithNextTransaction();
   }
 
-  private async Task PrefillFormWithNextTransaction()
+  private void PrefillFormWithNextTransaction()
   {
     if (_bankTransactions != null && _bankTransactions.Count > 0)
     {
