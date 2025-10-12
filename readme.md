@@ -5,7 +5,7 @@
 ## Purpose
 
 While using MMEX application I was struggling with entering data fast. As the whole, application
-is fine, and does the job. But data entry I flet as it could be better. That is way I've made this project.
+is fine, and does the job. But data entry I felt as it could be better. That is way I've made this project.
 To speed up this process.
 
 It is particularly useful for users who want to:
