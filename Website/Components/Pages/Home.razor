@@ -61,6 +61,7 @@
           Since transaction type is also controlling Receiver/Sender
           field, it requires a bit different approach how value is binded.
         *@
+        
         <MudSelect 
           T="string"
           Label="Transaction type" 
@@ -426,6 +427,10 @@
       _receiverRef.ForceRender(true);
       await _receiverRef.BlurAsync();
       await _receiverRef.FocusAsync();
+
+      // Give it some time for focus to take the effect.
+      // Only then, Menu can be closed.
+      await Task.Delay(10);
       await _receiverRef.CloseMenuAsync();
     }
 
