@@ -446,6 +446,9 @@
     _model.Categories[0].Name = "";
     _model.Categories[0].Ref?.ForceRender(true);
 
+    UpdateTotalAmount(0); 
+    _model.Notes = "";
+
     PrefillFormWithNextTransaction();
     Snackbar.Add("Transaction created successfully.", Severity.Success);
 
